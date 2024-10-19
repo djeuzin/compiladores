@@ -7,8 +7,7 @@ em caixa alta todos os comentários de um programa em C.*/
 
 /* Definir a função de transição para o DFA. 
 
-Quando o DFA está nos estado 2 ou 4, estamos dentro de um comentário
-*/
+Quando o DFA está nos estado 2 ou 4, estamos dentro de um comentário*/
 #define delta(q, c) (                     \
   (q == 0 && c == '/') ? 1 :              \
   (q == 1 && c == '/') ? 4 :              \
