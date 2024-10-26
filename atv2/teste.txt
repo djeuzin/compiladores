@@ -1,0 +1,24 @@
+{
+ab"name": "John Doe",
+  "age": 30,
+  "email": "johndoe@example.com",
+  "isStudent": false,
+  "courses": [
+    {
+      "name": "Introduction to Programming",
+      "code": "CS101",
+      "grade": "A"
+    },
+    {
+      "name": "Data Structures",
+      "code": "CS102",
+      "grade": "B+"
+    }
+  ],
+  "address": {
+    "street": "123 Main St",
+    "city": "Anytown",
+    "state": "CA",
+    "postalCode": "12345"
+  }
+}
