@@ -1,36 +1,53 @@
-#include "funcs.c"
+#include "funcs.h"
 
-int main(int argc, char* argv[]){
-
-    if(argc != 2)
-        return 1;
-
-    FILE *arq;
-
-    arq = fopen(argv[1], "r");
-    if(!arq)
-        return 1;
-
-    tBuffer b;
-
-    allocate_buffer(256, &b);
-
+char get_next_char(tBuffer* b, FILE* arq){
     char c;
-    int n = 1;
-    while(1){
-        c = get_next_char(&b, arq);
-        printf("%c", c);
-        b.used = USED;
-        if(n % 5 == 0)
-            b.used = UNUSED;
-        n++;
-        if(c == 0)
-            break;
+
+    if(!(b->loaded)){
+        fgets(b->buffer, b->size+1, arq);
+        b->next_index = 1;
+        b->loaded = 1;
+        b->used = UNUSED;
+        if(feof(arq))
+            return EOF;
     }
 
-    deallocate_buffer(&b);
+    // Se foi usado, resetar a flag e incrementar o buffer
+    if(b->used == USED){
+        b->used = UNUSED;
+        c = b->buffer[b->next_index];
+        (b->next_index)++;
+    }
+    else{
+        c = b->buffer[b->next_index - 1];
+    }
 
-    fclose(arq);
+    // Incrementar a linha do próximo caractere do buffer e resetar a flag loaded
+    if(c == '\n'){
+        (b->next_line)++;
+        b->loaded = 0;
+    }
 
-    return 0;
+    if(b->next_index >= b->size){
+        b->loaded = 0;
+    }
+    
+    return c;
+}
+
+int allocate_buffer(int size, tBuffer* b){
+    b->buffer = malloc((size+1)*sizeof(char));
+    if(!b->buffer)
+        return 0;
+    b->size = size;
+    b->loaded = 0;
+    b->used = UNUSED;
+    b->next_index = 1;
+    b->next_line = 1;
+
+    return 1;
+}
+
+int deallocate_buffer(tBuffer* b){
+    free(b->buffer);
 }
