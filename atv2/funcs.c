@@ -4,10 +4,13 @@ char get_next_char(tBuffer* b, FILE* arq){
     char c;
 
     if(!(b->loaded)){
-        fgets(b->buffer, b->size, arq);
-        b->next_index = 1;
-        b->loaded = 1;
-        b->used = UNUSED;
+        if(fgets(b->buffer, b->size, arq) != NULL){
+            b->next_index = 1;
+            b->loaded = 1;
+            b->used = UNUSED;
+        }
+        else
+            return EOF;
     }
 
     // Se foi usado, resetar a flag e incrementar o buffer
