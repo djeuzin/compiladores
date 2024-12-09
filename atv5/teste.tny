@@ -1,0 +1,5 @@
+teste := 5
+
+if (teste = 6) then 
+        teste := teste - 1
+
