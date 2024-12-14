@@ -1,3 +1,6 @@
+#ifndef _LEX_H_
+#define _LEX_H_
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -13,22 +16,17 @@
         sobrecarregar o código com sintaxe de ponteiros.
 */
 
-char* reserved_words[] = {"else", "if", "int", "return", "void", "while"};
-
 /* Definições dos tokens utilizados */
 typedef enum{
-        ERR, ELSE, IF, INT, RETURN, VOID, WHILE, ID, NUM,
+        ID, NUM,
         PLUS,   // + 
         MINUS,  // - 
         AST,    // * 
         DASH,   // / 
         LTHAN,  // < 
-        LEQUAL, // <= 
         GTHAN,  // > 
-        GEQUAL, // >= 
-        EQUAL,  // == 
-        DIFF,   // != 
         ATT,    // = 
+        DIFF,   // != 
         SCOL,   // ; 
         COMMA,  // , 
         OP_PAR, // (
@@ -36,7 +34,12 @@ typedef enum{
         OP_BRA, // [
         CL_BRA, // ] 
         OP_CUR, // {
-        CL_CUR // } 
+        CL_CUR, // } 
+        ERR,
+        LEQUAL, // <= 
+        GEQUAL, // >= 
+        EQUAL,  // == 
+        ELSE, IF, INT, RETURN, VOID, WHILE
 }token_t;
 
 // Buffer que armazena o fluxo de caracteres lido no arquivo fonte
@@ -45,28 +48,39 @@ typedef struct{
         unsigned int index;
         unsigned int line;
         unsigned int used;
-        char buffer[BSIZE];
+        char* buffer;
 }buffer_t;
 typedef buffer_t* buffer_p;
 
 // Armazena os lexemas obtidos
 typedef struct{
         unsigned int line;
+        unsigned int last;
         token_t token;
-        char lexem[BSIZE];
+        char word[BSIZE];
 }lex_t;
 typedef lex_t* lex_p;
 
 /* Tabelas utilizadas */
 extern int delta_table[][20];
-extern int accepting_table[10];
-extern int consuming_table[][20];
+extern int accepting_table[9];
+extern int used_table[][20];
+extern int debugFlag;
+extern FILE* sourceFile;
+extern buffer_p mainBuffer;
 
 /* Funções */
-buffer_p allocate_buffer(int);
-buffer_p deallocate_buffer(buffer_p);
-char get_next_char(FILE*, buffer_p);
-lex_t get_next_lexem(FILE*, buffer_p, int);
-FILE* open_source_file(int, char*[], int*);
+void allocate_buffer();
+void deallocate_buffer();
+void open_source_file(int, char*[]);
 void print_lexem(lex_t);
-token_t tokenfy_lex(char*, int);
+void close_source_file();
+char get_next_char();
+lex_t get_next_lexem();
+token_t assert_token(lex_t, int);
+token_t check_keyword(char*, int);
+int get_delta_index(char);
+
+#define MAX_KEYWORD_LENGTH 6
+#define MIN_KEYWORD_LENGTH 2
+#endif
