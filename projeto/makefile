@@ -1,7 +1,19 @@
-all: cmenos
+CC = gcc
+PROGRAM = cross
+WORKINGDIR = .
+INCDIRS=.
+DEPFLAGS=-MP -MD
+CFILES=$(foreach D,$(WORKINGDIR),$(wildcard $(D)/*.c))
+OFILES=$(patsubst %.c,%.o,$(CFILES))
+CFLAGS=-Wall -Wextra -g $(foreach D,$(INCDIRS),-I$(D)) $(DEPFLAGS)
 
-cmenos : main.c lex.o
-	gcc -o cmenos main.c lex.o
+all: $(PROGRAM)
 
-lex.o: lex.c
-	gcc -o lex.o lex.c -c
+$(PROGRAM): $(OFILES)
+	$(CC) -o $@ $^
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+clean:
+	rm *.o

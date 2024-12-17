@@ -1,6 +1,6 @@
 #include "lex.h"
 
-// Aloca um buffer dado a quantidade de caracteres que deve ser utilizada 
+// Aloca um buffer para ler os caracteres do arquivo fonte
 void allocate_buffer(){
         mainBuffer = malloc(sizeof(buffer_t));
         if(!mainBuffer){
@@ -22,6 +22,7 @@ void allocate_buffer(){
         mainBuffer->used = 1;
 }
 
+// Libera a memória utilizada pelo buffer
 void deallocate_buffer(){
         free(mainBuffer->buffer);
         free(mainBuffer);
@@ -29,7 +30,8 @@ void deallocate_buffer(){
 }
 
 // Carrega o buffer se estiver vazio (próximo caractere é \0).
-// Se o caractere foi consumido (b->used) incrementa o índice do buffer para apontar para o próximo caractere.
+// Se o caractere foi consumido (b->used) incrementa o índice do buffer
+// para apontar para o próximo caractere.
 // Rertorna o caractere do índice.
 char get_next_char(){
     if(mainBuffer->used){
@@ -89,8 +91,8 @@ lex_t get_next_lexem(){
                 c = get_next_char();
         }
 
-        // Se houver algum caractere para ser classificado ainda
-        // O classificamos e retornamos.
+        // Se EOF for retornado e houverem caracteres no 
+        // lexema, o classificamos e retornamos.
         if(lexIndex){
                 newLex.word[lexIndex] = '\0';
                 newLex.token = assert_token(newLex, lexIndex);
@@ -132,6 +134,7 @@ void open_source_file(int argc, char* argv[]){
         }
 }
 
+// Fecha o arquivo fonte
 void close_source_file(){
         fclose(sourceFile);
 }
@@ -233,11 +236,8 @@ token_t assert_token(lex_t lex, int size){
                 return check_keyword(lex.word, size);
         }
 
-        if(lex.word[0] == '!' && size == 1)
+        if(size == 1 && lex.word[0] == '!')
                 return ERR;
-
-        if(size == 1 || lex.token == NUM)
-                return lex.token;
 
         if(size == 2){
                 switch(lex.word[0]){
@@ -256,42 +256,46 @@ token_t assert_token(lex_t lex, int size){
 }
 
 // Checa se o identificador é uma palavra chave por meio de hashing
-token_t check_keyword(char word[], int size){
-    // Se a palavra for menor que a menor palavra chave ou maior que a maior palavra chave
-    // apenas retornamos o identificador.
+token_t check_keyword(char* word, int size){
     if(size < MIN_KEYWORD_LENGTH || size > MAX_KEYWORD_LENGTH)
         return ID;
 
-    // Caso contrário calculamos o hash da palavra recebida
-    int m = 1e9+9;
-    int p = 31;
-    long int p_pow = 1;
-    long int hash = 0;
-    for(int i = 0; i<size; i++){
-        hash = (hash + (word[i] - 'a' + 1) * p_pow) % m;
-        p_pow = (p_pow * p) % m;
-    }
+    // Como o range é fixo no tamanho da menor e da maior palavra chave,
+    // essa função de hash funciona atribuindo peso 2*(i+1) para cada caractere
+    // na posição i. Removendo as letras maiusculas e digitos obtemos uma função
+    // que checa se a palavra é palavra-chave em O(n) para n = tamanho da palavra
+    unsigned int hash = 0;
+    int i = 0, c;
 
-    // Checamos se casa com os hashs conhecidos das palavras chave
+    while((c = *word++)){
+        if(c < 142) // c é letra maiúscula ou digito => word não é palavra-chave
+            return ID;
+        hash += c*(i+1)*2;
+        i++;
+    }
+    
     switch(hash){
-        case 167591:
+        case 2132:
         return ELSE;
-        case 195:
+        case 618:
         return IF;
-        case 19663:
+        case 1346:
         return INT;
-        case 418076496:
+        case 4724:
         return RETURN;
-        case 128300:
+        case 2110:
         return VOID;
-        case 4984017:
+        case 3158:
         return WHILE;
         default:
         return ID;
     }
 }
 
-// Dado um caractere retorna o índice correspondente na tabela de transição
+// Dado um caractere retorna o índice correspondente na tabela de transição.
+// Além de ser o índicde na tabela de transição, o valor retornado também corresponde 
+// a definição enum de cada marca. Assim, ao obter o índice na tablea de transição para 
+// percorrer o DFA, o aproveitamos para classificar o lexema durante a leitura.
 int get_delta_index(char c){
         switch(c){
                 case '+':

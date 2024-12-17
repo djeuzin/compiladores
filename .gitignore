@@ -2,3 +2,7 @@
 
 /.vscode
 *.exe
+*.o
+*.d
+*.cpp
+*.txt
