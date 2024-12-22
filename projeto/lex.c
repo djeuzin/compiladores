@@ -1,3 +1,10 @@
+/**************************/
+/*  Cross: C- Compiler    */
+/*  lex.c                 */
+/*  Implementações das    */
+/*  funções do lexer.     */
+/**************************/
+
 #include "lex.h"
 
 // Aloca um buffer para ler os caracteres do arquivo fonte
@@ -8,7 +15,7 @@ void allocate_buffer(){
                 exit(1);
         }
 
-        mainBuffer->buffer = malloc((BSIZE+1)*sizeof(char));
+        mainBuffer->buffer = malloc((BUFFER_SIZE+1)*sizeof(char));
         if(!(mainBuffer->buffer)){
                 printf("ERRO: Não foi possível alocar memória para o buffer.\n");
                 free(mainBuffer);
@@ -16,7 +23,7 @@ void allocate_buffer(){
         }
 
         mainBuffer->index = -1;
-        mainBuffer->size = BSIZE;
+        mainBuffer->size = BUFFER_SIZE;
         mainBuffer->buffer[0] = '\0';
         mainBuffer->line = 1;
         mainBuffer->used = 1;
@@ -29,10 +36,9 @@ void deallocate_buffer(){
         mainBuffer = NULL;
 }
 
-// Carrega o buffer se estiver vazio (próximo caractere é \0).
-// Se o caractere foi consumido (b->used) incrementa o índice do buffer
-// para apontar para o próximo caractere.
-// Rertorna o caractere do índice.
+// Carrega o buffer se estiver vazio (próximo caractare é \0)
+// Se o caractere foi utilizado incrementa o índice
+// Retorna o caractere do índice
 char get_next_char(){
     if(mainBuffer->used){
         if(mainBuffer->buffer[mainBuffer->index + 1] == '\0'){
@@ -54,53 +60,47 @@ char get_next_char(){
 // Para cada caractere, percorre a tabela de transição.
 // Se chegar em um estado de aceitação, retorna o lexema.
 // Caso contrário continua adicionando caracteres à palavra do lexema.
-lex_t get_next_lexem(){
-        lex_t newLex;
-        newLex.last = 0;
-        int lexIndex = 0;
+void get_next_lexem(){
         char c = get_next_char();
         mainBuffer->used = 0;
-        int state = 0, cTableIndex;
+        
+        int state = 0;
+        int cTableIndex;
+
+        mainLex.token = OMTM;
+        mainLex.size = 0;
 
         while(c != EOF){
                 if(state == 0)
-                        lexIndex = 0;
+                        mainLex.size = 0;
                 cTableIndex = get_delta_index(c);
-                mainBuffer->used = used_table[state][cTableIndex];
+                mainBuffer->used = usedTable[state][cTableIndex];
 
+                // Se o caractere foi utilizado e não estamos em um comentário
+                // adicionamos o caractere à palavra do lexema.
                 if(mainBuffer->used && state != 6 && state != 7){
-                        if(lexIndex == 0){
-                                newLex.line = mainBuffer->line;
-                                newLex.token = cTableIndex;
+                        if(mainLex.size == 0){
+                                mainLex.line = mainBuffer->line;
+                                mainLex.token = cTableIndex;
                         }
-                        newLex.word[lexIndex] = c;
-                        lexIndex++; 
+                        mainLex.word[mainLex.size] = c;
+                        mainLex.size++; 
                 }
 
-                state = delta_table[state][cTableIndex];
+                state = deltaTable[state][cTableIndex];
 
-                if(accepting_table[state]){
-                        newLex.word[lexIndex] = '\0';
-                        newLex.token = assert_token(newLex, lexIndex);
-                        if(newLex.token == ERR)
-                                printf("ERRO LEXICO: \"%s\" INVALIDO [linha: %d], COLUNA %d.\n", newLex.word, newLex.line, mainBuffer->index+1);
-                        if(debugFlag)
-                                print_lexem(newLex);
-                        return newLex;
+                if(acceptingTable[state]){
+                        wrap_lexem();
+                        return;
                 }
                 c = get_next_char();
         }
 
         // Se EOF for retornado e houverem caracteres no 
         // lexema, o classificamos e retornamos.
-        if(lexIndex){
-                newLex.word[lexIndex] = '\0';
-                newLex.token = assert_token(newLex, lexIndex);
-                if(debugFlag)
-                        print_lexem(newLex);
-        }
-        newLex.last = 1;
-        return newLex;
+        if(mainLex.size)
+                wrap_lexem();
+        return;
 }
 
 // Abre o arquivo e seta a flag de debug
@@ -139,108 +139,17 @@ void close_source_file(){
         fclose(sourceFile);
 }
 
-// Printa o lexema
-void print_lexem(lex_t lex){
-        switch(lex.token){
-                case ELSE:
-                printf("<ELSE> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case IF:
-                printf("<IF> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break; 
-                case INT:
-                printf("<INT> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break; 
-                case RETURN:
-                printf("<RETURN> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break; 
-                case VOID:
-                printf("<VOID> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break; 
-                case WHILE:
-                printf("<WHILE> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break; 
-                case ID:
-                printf("<ID> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break; 
-                case NUM:
-                printf("<NUM> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break; 
-                case PLUS:
-                printf("<PLUS> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break; 
-                case MINUS:
-                printf("<MINUS> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break; 
-                case AST:
-                printf("<AST> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break; 
-                case DASH:
-                printf("<DASH> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break; 
-                case LTHAN:
-                printf("<LTHAN> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case LEQUAL:
-                printf("<LEQUAL> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case GTHAN:
-                printf("<GTHAN> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case GEQUAL:
-                printf("<GEQUAL> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case EQUAL:
-                printf("<EQUAL> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case DIFF:
-                printf("<DIFF> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case ATT:
-                printf("<ATT> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case SCOL:
-                printf("<SCOL> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case COMMA:
-                printf("<COMMA> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case OP_PAR:
-                printf("<OP_PAR> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case CL_PAR:
-                printf("<CL_PAR> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case OP_BRA:
-                printf("<OP_BRA> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case CL_BRA:
-                printf("<CL_BRA> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case OP_CUR:
-                printf("<OP_CUR> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                case CL_CUR:
-                printf("<CL_CUR> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-                default:
-                printf("<ERR> \"%s\" [linha: %d]\n", lex.word, lex.line);
-                break;
-        }
-}     
-
 // Verifica se o token da palavra está correto e retorna
 // Se for um identificador verificamos se é uma palavra chave
-token_t assert_token(lex_t lex, int size){
-        if(lex.token == ID){
-                return check_keyword(lex.word, size);
-        }
+token_t assert_token(){
+        if(mainLex.token == ID)
+                return check_keyword();
 
-        if(size == 1 && lex.word[0] == '!')
+        if(mainLex.size == 1 && mainLex.word[0] == '!')
                 return ERR;
 
-        if(size == 2){
-                switch(lex.word[0]){
+        if(mainLex.size == 2){
+                switch(mainLex.word[0]){
                         case '<':
                         return LEQUAL;
                         case '>':
@@ -252,26 +161,27 @@ token_t assert_token(lex_t lex, int size){
                 }
         }
 
-        return lex.token;
+        return mainLex.token;
 }
 
 // Checa se o identificador é uma palavra chave por meio de hashing
-token_t check_keyword(char* word, int size){
-    if(size < MIN_KEYWORD_LENGTH || size > MAX_KEYWORD_LENGTH)
+token_t check_keyword(){
+    if(mainLex.size < MIN_KEYWORD_LENGTH || mainLex.size > MAX_KEYWORD_LENGTH)
         return ID;
 
     // Como o range é fixo no tamanho da menor e da maior palavra chave,
     // essa função de hash funciona atribuindo peso 2*(i+1) para cada caractere
-    // na posição i. Removendo as letras maiusculas e digitos obtemos uma função
+    // na posição i. Removendo as letras maiúsculas e digitos obtemos uma função
     // que checa se a palavra é palavra-chave em O(n) para n = tamanho da palavra
     unsigned int hash = 0;
-    int i = 0, c;
+    int i = 0, c = mainLex.word[i];
 
-    while((c = *word++)){
-        if(c < 142) // c é letra maiúscula ou digito => word não é palavra-chave
+    while(c){
+        if(c < 96) // c é letra maiúscula ou digito => word não é palavra-chave
             return ID;
         hash += c*(i+1)*2;
         i++;
+        c = mainLex.word[i];
     }
     
     switch(hash){
@@ -290,6 +200,16 @@ token_t check_keyword(char* word, int size){
         default:
         return ID;
     }
+}
+
+// Embrulha o lexema para a utilização do parser
+void wrap_lexem(){
+        mainLex.word[mainLex.size] = '\0';
+        mainLex.token = assert_token();
+        if(mainLex.token == ERR)
+                printf("ERRO LEXICO: \"%s\" INVALIDO [linha: %d], COLUNA %d.\n", mainLex.word, mainLex.line, mainBuffer->index+1);
+        if(debugFlag)
+                print_lexem(mainLex);
 }
 
 // Dado um caractere retorna o índice correspondente na tabela de transição.

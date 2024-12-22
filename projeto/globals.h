@@ -1,31 +1,18 @@
-/*
-        CROSS: C- compiler
-              ____
-             /    \
-      ______/      \______
-     /                    \
-    /______          ______\
-    \     /          \     /
-     \___/            \___/
-        /              \
-       /                \
-      /                  \ 
-     /____________________\
-     \                    /
-      \                  /
-       \________________/
-
-                                */
-
-
+/**************************/
+/*  Cross: C- Compiler    */
+/*  globals.h             */
+/*  Contém as definições  */
+/*  das variáveis globais */
+/*  utilizadas.           */
+/**************************/
 
 #ifndef _GLOBALS_H_
 #define _GLOBALS_H_
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <ctype.h>
-#include "lex.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include "types.h"
 
 int debugFlag = 0;
 FILE* sourceFile;

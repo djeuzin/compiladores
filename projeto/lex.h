@@ -1,3 +1,10 @@
+/**************************/
+/*  Cross: C- Compiler    */
+/*  lex.h                 */
+/*  Contém as definições  */
+/*  das funções do lexer. */
+/**************************/
+
 #ifndef _LEX_H_
 #define _LEX_H_
 
@@ -5,82 +12,45 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "delta_table.h"
-
-/* Definições úteis */
-
-#define BSIZE 256       // Tamanho do buffer do lexer
-
-/*
-        Para as definições de tipo a convenção é utilizar sufixo _t para 
-        tipos definidos e sufixo _p para ponteiros dos tipos a fim de não
-        sobrecarregar o código com sintaxe de ponteiros.
-*/
-
-/* Definições dos tokens utilizados */
-typedef enum{
-        ID, NUM,
-        PLUS,   // + 
-        MINUS,  // - 
-        AST,    // * 
-        DASH,   // / 
-        LTHAN,  // < 
-        GTHAN,  // > 
-        ATT,    // = 
-        DIFF,   // != 
-        SCOL,   // ; 
-        COMMA,  // , 
-        OP_PAR, // (
-        CL_PAR, // ) 
-        OP_BRA, // [
-        CL_BRA, // ] 
-        OP_CUR, // {
-        CL_CUR, // } 
-        ERR,
-        LEQUAL, // <= 
-        GEQUAL, // >= 
-        EQUAL,  // == 
-        ELSE, IF, INT, RETURN, VOID, WHILE
-}token_t;
-
-// Buffer que armazena o fluxo de caracteres lido no arquivo fonte
-typedef struct{
-        unsigned int size;
-        unsigned int index;
-        unsigned int line;
-        unsigned int used;
-        char* buffer;
-}buffer_t;
-typedef buffer_t* buffer_p;
-
-// Armazena os lexemas obtidos
-typedef struct{
-        unsigned int line;
-        unsigned int last;
-        token_t token;
-        char word[BSIZE];
-}lex_t;
-typedef lex_t* lex_p;
-
-/* Tabelas utilizadas */
-extern int delta_table[][20];
-extern int accepting_table[9];
-extern int used_table[][20];
-extern int debugFlag;
-extern FILE* sourceFile;
-extern buffer_p mainBuffer;
-
-/* Funções */
-void allocate_buffer();
-void deallocate_buffer();
-void open_source_file(int, char*[]);
-void print_lexem(lex_t);
-void close_source_file();
-char get_next_char();
-lex_t get_next_lexem();
-token_t assert_token(lex_t, int);
-token_t check_keyword(char*, int);
-int get_delta_index(char);
+#include "types.h"
+#include "utils.h"
 
 #define MAX_KEYWORD_LENGTH 6
 #define MIN_KEYWORD_LENGTH 2
+
+/* Tabelas utilizadas */
+extern int deltaTable[][20];
+extern int acceptingTable[9];
+extern int usedTable[][20];
+extern int debugFlag;
+extern FILE* sourceFile;
+extern buffer_p mainBuffer;
+extern lex_t mainLex;
+
+// Alocação de memória para o buffer
+void allocate_buffer();
+void deallocate_buffer();
+
+// Manipulação do arquivo fonte
+void open_source_file(int, char*[]);
+void close_source_file();
+
+// Retorna o próximo caractere do buffer
+char get_next_char();
+
+// Retorna o próximo lexema classificado
+void get_next_lexem();
+
+// Confere se o token atribuido ao lexema está correto
+token_t assert_token();
+
+// Checa se a palavra do lexema é palavra-chave
+token_t check_keyword();
+
+// Embrula o lexema para ser utilizado pelo parser
+void wrap_lexem();
+
+// Retorna o índice do caractere na tabela de transição
+int get_delta_index(char);
+
 #endif
