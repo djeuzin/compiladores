@@ -367,8 +367,9 @@ char *yytext;
 #line 1 "lexer.l"
 #define INITIAL 0
 #line 2 "lexer.l"
-#include "funcs.h"        
-#line 372 "lex.yy.c"
+#include "funcs.h"
+#define LEX
+#line 373 "lex.yy.c"
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -519,9 +520,9 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
 
-#line 7 "lexer.l"
+#line 8 "lexer.l"
 
-#line 525 "lex.yy.c"
+#line 526 "lex.yy.c"
 
 	if ( yy_init )
 		{
@@ -606,62 +607,64 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 8 "lexer.l"
+#line 9 "lexer.l"
 {return PLUS;}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 9 "lexer.l"
+#line 10 "lexer.l"
 {return LPAR;}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 10 "lexer.l"
+#line 11 "lexer.l"
 {return RPAR;}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 11 "lexer.l"
+#line 12 "lexer.l"
 {return MINUS;}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 12 "lexer.l"
+#line 13 "lexer.l"
 {return TIMES;}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 13 "lexer.l"
+#line 14 "lexer.l"
 {return DASH;}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 14 "lexer.l"
-{return atoi(yytext);}
+#line 15 "lexer.l"
+{value = atoi(yytext); return NUM;}
 	YY_BREAK
 case 8:
-YY_RULE_SETUP
-#line 15 "lexer.l"
-{;}
-	YY_BREAK
-case 9:
 YY_RULE_SETUP
 #line 16 "lexer.l"
 {;}
 	YY_BREAK
-case 10:
+case 9:
 YY_RULE_SETUP
 #line 17 "lexer.l"
+{;}
+	YY_BREAK
+case 10:
+YY_RULE_SETUP
+#line 18 "lexer.l"
 {printf("Erro: caractere inválido.\n"); exit(1);}
+	YY_BREAK
+case YY_STATE_EOF(INITIAL):
+#line 19 "lexer.l"
+{return END;}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 18 "lexer.l"
+#line 20 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 663 "lex.yy.c"
-case YY_STATE_EOF(INITIAL):
-	yyterminate();
+#line 668 "lex.yy.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1545,7 +1548,9 @@ int main()
 	return 0;
 	}
 #endif
-#line 18 "lexer.l"
+#line 20 "lexer.l"
 
 
-int yylex();
+int yywrap(){
+        return 1;
+}

@@ -6,15 +6,17 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-enum tokens{
+enum{
     LPAR,
     RPAR,
     NUM,
     PLUS,
     MINUS,
     TIMES,
-    DASH
+    DASH,
+    END
 };
 
-FILE* sourceFile;
+extern int value;
+
 #endif

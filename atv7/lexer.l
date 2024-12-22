@@ -1,5 +1,6 @@
 %{
-#include "funcs.h"        
+#include "funcs.h"
+#define LEX
 %}
 
 NUMBER [0-9]
@@ -11,11 +12,13 @@ NUMBER [0-9]
 "-" {return MINUS;}
 "*" {return TIMES;}
 "/" {return DASH;}
-{NUMBER}+ {return atoi(yytext);}
+{NUMBER}+ {value = atoi(yytext); return NUM;}
 \n {;}
 " " {;}
 . {printf("Erro: caractere inválido.\n"); exit(1);}
+<<EOF>> {return END;}
 %%
 
-yyin = sourceFile;
-int yylex();
+int yywrap(){
+        return 1;
+}
