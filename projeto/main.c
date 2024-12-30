@@ -7,6 +7,7 @@
 /*      /________\      */
 /*      \        /      */
 /*       \______/       */
+/*                      */
 /************************/
 
 #include "globals.h"
@@ -17,11 +18,12 @@ int main(int argc, char* argv[]){
 	allocate_buffer();
 
 	get_next_lexem();
-	while(mainLex.token != OMTM){
+	while(mainLex.token != ENDFILE){
 		get_next_lexem();
 	}	
 
 	deallocate_buffer();
 	close_source_file();
+
 	return 0;
 }

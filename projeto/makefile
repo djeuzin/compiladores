@@ -12,7 +12,7 @@ all: $(PROGRAM)
 $(PROGRAM): $(OFILES)
 	$(CC) -o $@ $^
 
-%.o: %.c
+%.o: %.c %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:

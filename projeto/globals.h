@@ -14,9 +14,10 @@
 #include <stdio.h>
 #include "types.h"
 
-int debugFlag = 0;
+int lexFlag = 0;
+int parserFlag = 0;
 FILE* sourceFile;
-buffer_p mainBuffer;
+buffer_t mainBuffer;
 lex_t mainLex;
 
 #endif
