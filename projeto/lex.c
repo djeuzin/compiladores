@@ -9,6 +9,7 @@
 
 // Definição dos arrays que armazenam as palavras chaves e os respectivos hashs
 char keywords[NUM_KEYWORDS][30] = {"else", "if", "int", "return", "void", "while"};
+token_t keywordsTokens[NUM_KEYWORDS] = {ELSE, IF, INT, RETURN, VOID, WHILE};
 unsigned int keywordsHash[NUM_KEYWORDS] = {0};
 
 // Aloca um buffer para ler os caracteres do arquivo fonte
@@ -76,12 +77,14 @@ void get_next_lexem(){
         while(c != EOF){
                 if(state == 0)
                         mainLex.size = 0;
+
                 cTableIndex = get_delta_index(c);
                 mainBuffer.used = usedTable[state][cTableIndex];
+                state = deltaTable[state][cTableIndex];
 
-                // Se o caractere foi utilizado e não estamos em um comentário
-                // adicionamos o caractere à palavra do lexema.
-                if(mainBuffer.used && state != 6 && state != 7){
+                // Se o caractere foi utilizado e o DFA não está em um estado que deve
+                // ser ignorado, adicionamos o caractere à palavra do lexema.
+                if(mainBuffer.used && is_ignored_state(state)){
                         if(mainLex.size == 0){
                                 mainLex.line = mainBuffer.line;
                                 mainLex.column = mainBuffer.column;
@@ -91,12 +94,11 @@ void get_next_lexem(){
                         mainLex.size++; 
                 }
 
-                state = deltaTable[state][cTableIndex];
-
                 if(acceptingTable[state]){
                         wrap_lexem();
                         return;
                 }
+
                 c = get_next_char();
         }
 
@@ -104,7 +106,6 @@ void get_next_lexem(){
         // lexema, o classificamos e retornamos.
         if(mainLex.size)
                 wrap_lexem();
-        return;
 }
 
 // Abre o arquivo e seta a flag de debug
@@ -173,6 +174,7 @@ token_t check_keyword(){
     if(mainLex.size < MIN_KEYWORD_LENGTH || mainLex.size > MAX_KEYWORD_LENGTH)
         return ID;
 
+    // Gera os hashs das palavras-chave na primeira ativação da função
     if(!keywordsHash[0])
         generate_keywords_hash();
 
@@ -181,9 +183,12 @@ token_t check_keyword(){
     if(hash == ID)
         return ID;
 
+    // A ideia original era utilizar um switch case com os hashs das palavras-chave já calculado
+    // e inserido manualmente no código. Utilizar o array de palavras-chave e dos hashes torna
+    // o código bem mais flexível, porém há a necessidade de um loop com complexidade O(NUM_KEYWORDS).
     for(int i=0; i<NUM_KEYWORDS; i++)
         if(hash == keywordsHash[i])
-            return i+22;
+            return keywordsTokens[i];
 
     return ID;
 }
@@ -255,8 +260,7 @@ int hash_function(char *word){
 
     // Como o range é fixo no tamanho da menor e da maior palavra chave,
     // essa função de hash funciona atribuindo peso 2*(i+1) para cada caractere
-    // na posição i. Removendo as letras maiúsculas e digitos obtemos uma função
-    // que checa se a palavra é palavra-chave em O(n) para n = tamanho da palavra
+    // na posição i.
     while(c){
         if(c < 96) // c é letra maiúscula ou digito => word não é palavra-chave
             return ID;

@@ -1,6 +1,7 @@
 #include "parser.h"
 
 pNode parse(){
+        token = -1;
         get_next_token();
         pNode newTree = _exp();
         if(token != END){
@@ -15,15 +16,38 @@ pNode _exp(){
                 return NULL;
         pNode newNode;
         pNode aux;
+        pNode aux2 = NULL;
         newNode = ter();
         
         while(token == PLUS || token == MINUS){
-                aux = malloc(sizeof(tNode));
-                aux->token = token;
-                aux->left = newNode;
-                newNode = aux;
-                get_next_token();
-                newNode->right = ter();
+                if(token == MINUS){
+                        aux = malloc(sizeof(tNode));
+                        aux->token = PLUS;
+                        aux->left = newNode;
+                        aux->right = NULL;
+                        newNode = aux;
+
+                        aux = malloc(sizeof(tNode));
+                        aux->value = 0;
+                        aux->token = NUM;
+                        aux->left = NULL;
+                        aux->right = NULL;
+
+                        newNode->right = malloc(sizeof(tNode));
+                        newNode->right->token = MINUS;
+                        newNode->right->left = aux;
+
+                        get_next_token();
+                        newNode->right->right = ter();
+                }
+                else{
+                        aux = malloc(sizeof(tNode));
+                        aux->token = token;
+                        aux->left = newNode;
+                        newNode = aux;
+                        get_next_token();
+                        newNode->right = ter();
+                }
         }
 
         return newNode;
@@ -36,7 +60,7 @@ pNode ter(){
         pNode aux;
 
         newNode = fat();
-        while(token == TIMES || token == DASH){
+        while(token == TIMES || token == DASH || token == MOD){
                 aux = malloc(sizeof(tNode));
                 aux->token = token;
                 aux->left = newNode;
@@ -49,6 +73,26 @@ pNode ter(){
 }
 
 pNode fat(){
+        if(token == END)
+                return NULL;
+        
+        pNode newNode;
+        pNode aux;
+
+        newNode = fat_();
+        while(token == EXP){
+                aux = malloc(sizeof(tNode));
+                aux->token = token;
+                aux->left = newNode;
+                newNode = aux;
+                get_next_token();
+                newNode->right = fat();
+        }
+
+        return newNode;
+}
+
+pNode fat_(){
         if(token == END)
                 return NULL;
         pNode newNode;
@@ -100,14 +144,25 @@ void get_next_token(){
 }
 
 int compute(pNode tree){
-        if(tree->token == NUM)
+        if(tree->token == NUM){
                 return tree->value;
+        }
         
+        int right;
         switch(tree->token){
                 case PLUS:
                 return compute(tree->left) + compute(tree->right);
+                case EXP:
+                return pow(compute(tree->left), compute(tree->right));
+                case MOD:
+                right = compute(tree->right);
+                if(right == 0){
+                        printf("ERRO divisão por 0\n");
+                        return -1;
+                }
+                return compute(tree->left) % right;
                 case DASH:
-                int right = compute(tree->right);
+                right = compute(tree->right);
                 if(right == 0){
                         printf("ERRO divisão por 0\n");
                         return -1;

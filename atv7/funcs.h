@@ -14,7 +14,9 @@ enum{
     MINUS,
     TIMES,
     DASH,
-    END
+    END,
+    EXP,
+    MOD
 };
 
 extern int value;

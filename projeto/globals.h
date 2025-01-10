@@ -19,5 +19,7 @@ int parserFlag = 0;
 FILE* sourceFile;
 buffer_t mainBuffer;
 lex_t mainLex;
+stack_p parserStack;
+int currentSymbol;
 
 #endif

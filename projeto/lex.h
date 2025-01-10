@@ -33,6 +33,7 @@ extern lex_t mainLex;
 /* Palavras chave */
 extern char keywords[NUM_KEYWORDS][30];
 extern unsigned int keywordsHash[NUM_KEYWORDS];
+extern token_t keywordsTokens[NUM_KEYWORDS];
 
 // Alocação de memória para o buffer
 void allocate_buffer();

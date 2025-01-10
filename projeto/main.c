@@ -12,15 +12,13 @@
 
 #include "globals.h"
 #include "lex.h"
+#include "parser.h"
 
 int main(int argc, char* argv[]){
 	open_source_file(argc, argv);
 	allocate_buffer();
 
-	get_next_lexem();
-	while(mainLex.token != ENDFILE){
-		get_next_lexem();
-	}	
+	parse();
 
 	deallocate_buffer();
 	close_source_file();

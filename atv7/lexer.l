@@ -1,6 +1,7 @@
 %{
 #include "funcs.h"
 #define LEX
+extern int token;
 %}
 
 NUMBER [0-9]
@@ -12,6 +13,8 @@ NUMBER [0-9]
 "-" {return MINUS;}
 "*" {return TIMES;}
 "/" {return DASH;}
+"%" {return MOD;}
+"^" {return EXP;}
 {NUMBER}+ {value = atoi(yytext); return NUM;}
 \n {;}
 " " {;}

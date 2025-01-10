@@ -19,4 +19,7 @@ extern int acceptingTable[];
 // Tabela que indica, para cada transição do DFA, se o caractere é consumido (1) ou não (0)
 extern int usedTable[][20];
 
+// Retorna 1 se o estado passado com o argumento deve ser ignorado
+int is_ignored_state(int);
+
 #endif

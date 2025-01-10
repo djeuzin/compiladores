@@ -1,8 +1,9 @@
 # ignore vscode folder and .exe files
 
 /.vscode
+/./projeto/testes
 *.exe
 *.o
 *.d
-*.cpp
+*.cm
 *.txt

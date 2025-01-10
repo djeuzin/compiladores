@@ -14,6 +14,7 @@
 // Para definir os tipos utiliza-se sufixo _t
 // Para ponteiros de tipos utiliza-se o sufixo _p
 
+/*-----Definições de tipos para o lexer-----*/
 // Definição dos tokens dos lexemas
 typedef enum{
         ID, NUM,
@@ -37,8 +38,8 @@ typedef enum{
         LEQUAL, // <= 
         GEQUAL, // >= 
         EQUAL,  // == 
-        ELSE, IF, INT, RETURN, VOID, WHILE, 
-        ENDFILE // Token de fim de arquivo
+        ELSE, IF, INT, RETURN, VOID, WHILE,
+	ENDFILE // token retornado quando é atingido o fim do arquivo
 }token_t;
 
 // Buffer que armazena o fluxo de caracteres lido do arquivo fonte
@@ -58,5 +59,65 @@ typedef struct{
         token_t token;
         char word[BUFFER_SIZE];
 }lex_t;
+
+/*-----Definições de tipos para o parser-----*/
+
+// Definições dos não-terminais que serão utilizados na pilha
+typedef enum{
+	PROG,
+	DECL_LIST,
+	DECL_LIST_,
+	DECLARATION,
+	DECLARATION_,
+	VAR_DECL,
+	VAR_DECL_,
+	TYPE_SPEC,
+	PARAMS,
+	VOID_PARAMS,
+	PARAM_LIST,
+	PARAM_LIST_,
+	PARAM,
+	PARAM_,
+	COMP_STMT,
+	LOCAL_DECL,
+	LOCAL_DECL_,
+	STMT_LIST,
+	STMT_LIST_,
+	STATEMENT,
+	EXP_STMT,
+	SELECTION_STMT,
+	SELECTION_STMT_,
+	ITERATION_STMT,
+	RETURN_STMT,
+	RETURN_STMT_,
+	EXPRESSION,
+	EXPRESSION_,
+	EXPRESSION__,
+	VAR,
+	VAR_,
+	SIMPLE_EXP,
+	RELOP,
+	ADD_EXP,
+	ADD_EXP_,
+	ADDOP,
+	TERM,
+	TERM_,
+	MULOP,
+	FACTOR,
+	FACTOR_,
+	ARGS,
+	ARG_LIST,
+	ARG_LIST_,
+	ENDPARSE // Demarca o final da pilha do parser
+} nonTerminal_t;
+
+// Nó da pilha principal do parser
+struct stackNode{
+	int symbol;
+	int isTerminal;
+	struct stackNode* next;
+};
+
+typedef struct stackNode* stack_p;
 
 #endif

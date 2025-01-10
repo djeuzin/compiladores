@@ -2,6 +2,7 @@
 #define PARSER
 
 #include "funcs.h"
+#include <math.h>
 
 extern int yylex();
 extern int token;
@@ -20,6 +21,7 @@ pNode parse();
 pNode _exp();
 pNode ter();
 pNode fat();
+pNode fat_();
 pNode clear(pNode);
 void print_tree(pNode);
 int compute(pNode tree);
