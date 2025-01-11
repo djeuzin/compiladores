@@ -8,6 +8,7 @@ int value;
 int topOfStack;
 stack mainStack = NULL;
 pNode parseTree;
+ast_stack astStack;
 
 int main(int argc, char ** argv){
         yyin = fopen(argv[1], "r");
@@ -15,7 +16,5 @@ int main(int argc, char ** argv){
         parse();
 
         fclose(yyin);
-        clear_stack();
-        parseTree = clear_tree(parseTree);
         return 0;
 }
