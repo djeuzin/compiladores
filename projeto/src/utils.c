@@ -7,6 +7,118 @@
 
 #include "utils.h"
 
+void blue_text() { printf("\033[0;34m"); }
+void default_color_text() { printf("\033[0m"); }
+void red_text() { printf("\033[0;31m"); }
+
+void display_help(){
+        printf("Cross C- compiler\nOpcoes:\n");
+        
+        blue_text();
+        printf("--help");
+        default_color_text();
+        printf("\t\tExibe opcoes.\n");
+
+        blue_text();
+        printf("-l, -L");
+        default_color_text();
+        printf("\t\tExibe os lexemas classificados.\n");
+
+        blue_text();
+        printf("-p, -P");
+        default_color_text();
+        printf("\t\tExibe a arvore abstrata gerada pelo parser.\n");
+
+        blue_text();
+        printf("-o, -O");
+        default_color_text();
+        printf("\t\tRealiza apenas a analise lexica.\n");
+
+        exit(0);
+}
+
+// Abre o arquivo e seta a flag de debug
+void open_source_file(int argc, char* argv[]){
+        if(argc < 2){
+                red_text();
+                fprintf(stderr, "ERRO: Entre com o caminho do arquivo fonte.\n"); 
+                default_color_text();
+                exit(1);
+        }
+
+        int fileOpened = FALSE;
+        for(int i=1; i<argc; i++){
+                if(argv[i][0] == '-'){
+                        if(                             \
+                                argv[i][1] == '-' &&    \
+                                argv[i][2] == 'h' &&    \
+                                argv[i][3] == 'e' &&    \
+                                argv[i][4] == 'l' &&    \
+                                argv[i][5] == 'p' &&    \
+                                argv[i][6] == '\0'      \
+                        ){
+                                if(fileOpened)
+                                        close_source_file();
+                                display_help();
+                        }
+
+                        if(argv[i][2] != '\0'){
+                                red_text();
+                                fprintf(stderr, "ERRO: Comando invalido.\n");
+                                default_color_text();
+                                if(fileOpened)
+                                        close_source_file();
+                                exit(1);
+                        }
+
+                        switch(argv[i][1]){
+                                case 'l':
+                                case 'L':
+                                lexFlag = TRUE;
+                                break;
+                                case 'p':
+                                case 'P':
+                                parserFlag = TRUE;
+                                break;
+                                case 'o':
+                                case 'O':
+                                lexOnly = TRUE;
+                                break;
+                                default:
+                                red_text();
+                                fprintf(stderr, "ERRO: Comando %s invalido.\n", argv[i]);
+                                default_color_text();
+                                if(fileOpened)
+                                        close_source_file();
+                                exit(1);
+                        }
+                }
+                else{
+                        if(fileOpened){
+                                red_text();
+                                fprintf(stderr, "ERRO: Comando invalido.\n");
+                                default_color_text();
+                                close_source_file();
+                                exit(1);
+                        }
+
+                        sourceFile = fopen(argv[i], "r");
+                        if(!sourceFile){
+                                red_text();
+                                fprintf(stderr, "ERRO: Nao foi possivel abrir o arquivo.\n");
+                                default_color_text();
+                                exit(1);
+                        }
+                        fileOpened = TRUE;
+                }
+        }
+}
+
+// Fecha o arquivo fonte
+void close_source_file(){
+        fclose(sourceFile);
+}
+
 // Printa o lexema
 void print_lexem(){
         switch(mainLex.token){

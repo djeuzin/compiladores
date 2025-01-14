@@ -50,4 +50,12 @@ void match(int, int);
 // Exibe a pilha
 void print_stack();
 
+// ast_stack_p ast_init_stack();
+// ast_stack_p ast_push_stack(ast_stack_p, ast_p);
+// ast_p ast_pop_stack(ast_stack_p);
+// ast_p ast_clear_tree(ast_p);
+// ast_p ast_create_node(int, ast_kind_t, char[]);
+// ast_stack_p ast_clear_stack(ast_stack_p);
+// int ast_ignored_token(token_t);
+
 #endif

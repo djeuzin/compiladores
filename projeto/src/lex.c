@@ -81,7 +81,7 @@ void get_next_lexem(){
                 cTableIndex = get_delta_index(c);
                 mainBuffer.used = usedTable[state][cTableIndex];
                 state = deltaTable[state][cTableIndex];
-
+        
                 // Se o caractere foi utilizado e o DFA não está em um estado que deve
                 // ser ignorado, adicionamos o caractere à palavra do lexema.
                 if(mainBuffer.used && is_ignored_state(state)){
@@ -106,42 +106,6 @@ void get_next_lexem(){
         // lexema, o classificamos e retornamos.
         if(mainLex.size)
                 wrap_lexem();
-}
-
-// Abre o arquivo e seta a flag de debug
-void open_source_file(int argc, char* argv[]){
-        if(argc < 2){
-                printf("ERRO: Entre com o caminho do arquivo fonte.\n"); 
-                exit(1);
-        }
-
-        if(argc > 3){
-                printf("ERRO: Número de argumentos excedido.\n");
-                exit(1);
-        }
-
-        if(argc == 3){
-                if(argv[2][0] == '-' &&                         \
-                (argv[2][1] == 'l' || argv[2][1] == 'L') &&     \
-                argv[2][2] == '\0'){
-                        lexFlag = 1;
-                }
-                else{
-                        printf("ERRO: Flag inválida.\n");
-                        exit(1);
-                }
-        }
-
-        sourceFile= fopen(argv[1], "r");
-        if(!sourceFile){
-                printf("ERRO: Não foi possível abrir o arquivo.\n");
-                exit(1);
-        }
-}
-
-// Fecha o arquivo fonte
-void close_source_file(){
-        fclose(sourceFile);
 }
 
 // Verifica se o token da palavra está correto e retorna
@@ -242,7 +206,9 @@ int get_delta_index(char c){
                 case '}':
                 return 17;
                 case ' ':
-                case '\n':
+		case '\n':
+                case '\t':
+                case '\r':
                 return 19;
                 default:
                 if((c > 64 && c <91) || (c > 96 && c < 123)) // letter

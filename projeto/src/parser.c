@@ -16,10 +16,10 @@ void pop_stack(){
 }
 
 // Adiciona um elemento à pilha do parser
-void push_stack(int newSymbol, int isTerminal){
+void push_stack(int newSymbol, int kind){
 	stack_p aux = malloc(sizeof(struct stackNode));
 	aux->symbol = newSymbol;
-	aux->isTerminal = isTerminal;
+	aux->kind = kind;
 	aux->next = parserStack;
 	parserStack = aux;
 }
@@ -54,10 +54,9 @@ void match(int currentSymbol, int token){
 
 // Exibe os elementos da pilha
 void print_stack(){
-        printf("token atual: %s\n", mainLex.word);
         stack_p aux = parserStack;
         while(aux != NULL){
-                printf("%d-%d\n", aux->symbol, aux->isTerminal);
+                printf("%d-%d\n", aux->symbol, aux->kind);
                 aux = aux->next;
         }
 }
@@ -72,7 +71,7 @@ void parse(){
 	get_next_lexem();
 
 	while(parserStack->symbol != ENDPARSE){
-		if(parserStack->isTerminal){
+		if(parserStack->kind){
 			// Se o símbolo no topo da pilha é um terminal, então 
 			// comparamos ele com o que é lido pelo lexer
 			pop_stack();
@@ -82,13 +81,13 @@ void parse(){
 		else{
 			// O símbolo no topo da pilha é um não terminal
 			// Verificamos qual passo de derivação deve ser tomado pela tabela
-			// Chamamos handleStack() para manipular a pilha com a derivação correspondente
+			// Chamamos handle_stack() para manipular a pilha com a derivação correspondente
 			pop_stack();
 			nextStep = parsingTable[currentSymbol][mainLex.token];
 			
 			if(nextStep == 0){
-                                printf("<%s> simbolo atual: %d na linha: %d coluna: %d\n", mainLex.word, currentSymbol, mainLex.line, mainLex.column);
-				printf("Erro crítico.\n");
+                                printf("ERRO SINTATICO: \"%s\" INVALIDO [linha: %d], COLUNA %d.", mainLex.word, mainLex.line, mainLex.column);
+				clear_stack();
 				return;
 			}
 
@@ -418,3 +417,81 @@ void handle_stack(int nextStep){
 		break;
 	}
 }
+
+/*-------------ast functions*--------*/
+// ast_stack_p ast_init_stack(){
+// 	ast_stack_p newAstStack = malloc(sizeof(ast_stack_t));
+// 	newAstStack = NULL;
+// 	return newAstStack;
+// }
+
+// ast_stack_p ast_push_stack(ast_stack_p astStack, ast_p treeNode){
+// 	ast_stack_p newAstStack = malloc(sizeof(ast_stack_t));
+// 	newAstStack->top = treeNode;
+// 	newAstStack->next = astStack;
+// 	astStack = newAstStack;
+// 	return astStack;
+// }
+
+// ast_p ast_pop_stack(ast_stack_p, astStack){
+// 	ast_p aux = astStack->top;
+// 	ast_stack_p auxStack = astStack;
+// 	astStack = astStack->next;
+// 	free(auxStack);
+// 	return aux;
+// }
+
+// ast_p ast_clear_tree(ast_p tree){
+// 	if(tree == NULL)
+// 		return NULL;
+
+// 	tree->sibling = ast_clear_tree(tree->sibling);
+// 	for(int i=0; i<AST_MAX_CHILDREN; i++)
+// 		tree->children[i] = ast_clear_tree(tree->children[i]);
+
+// 	free(tree);
+// 	return NULL;
+// }
+
+// ast_stack_p ast_clear_stack(ast_stack_p astStack){
+// 	ast_stack_p aux;
+
+// 	while(astStack){
+// 		aux = astStack;
+// 		astStack = astStack->next;
+// 		aux->top = ast_clear_tree(aux->top);
+// 		free(aux);
+// 	}
+
+// 	return NULL;
+// }
+
+// ast_p ast_create_node(int value, ast_kind_t kind, char name[]){
+// 	ast_p newNode = malloc(sizeof(ast_t));
+	
+// 	newNode->sibling = NULL;
+// 	newNode->value = value;
+// 	newNode->name = name;
+// 	newNode->kind = kind;
+
+// 	for(int i=0; i<AST_MAX_CHILDREN; i++)
+// 		newNode->children[i] = NULL;
+
+// 	return newNode;
+// }
+
+// int ast_ignored_token(token_t token){
+// 	switch(token){
+// 		case OP_PAR:
+// 		case CL_PAR:
+// 		case OP_BRA:
+// 		case CL_BRA:
+// 		case OP_CUR:
+// 		case CL_CUR:
+// 		case COMMA:
+// 		case SCOL:
+// 		return TRUE;
+// 		default:
+// 		return FALSE;
+// 	}
+// }

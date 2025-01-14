@@ -258,15 +258,6 @@ int compute(ast tree){
         switch(tree->token){
                 case PLUS:
                 return compute(tree->left) + compute(tree->right);
-                case EXP:
-                return pow(compute(tree->left), compute(tree->right));
-                case MOD:
-                right = compute(tree->right);
-                if(right == 0){
-                        printf("ERRO divisão por 0\n");
-                        return -1;
-                }
-                return compute(tree->left) % right;
                 case DASH:
                 right = compute(tree->right);
                 if(right == 0){

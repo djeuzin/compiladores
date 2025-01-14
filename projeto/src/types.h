@@ -10,6 +10,9 @@
 #define _TYPES_H_
 
 #define BUFFER_SIZE 256
+#define TRUE 1
+#define FALSE 0
+#define MAX_AST_CHILDREN 3
 
 // Para definir os tipos utiliza-se sufixo _t
 // Para ponteiros de tipos utiliza-se o sufixo _p
@@ -109,15 +112,53 @@ typedef enum{
 	ARG_LIST,
 	ARG_LIST_,
 	ENDPARSE // Demarca o final da pilha do parser
-} nonTerminal_t;
+} non_terminal_t;
+
+typedef enum{
+	NON_TERMINAL,
+	TERMINAL,
+	TREE_BUILDER
+} parser_stack_kind_t;
 
 // Nó da pilha principal do parser
 struct stackNode{
 	int symbol;
-	int isTerminal;
+	parser_stack_kind_t kind;
 	struct stackNode* next;
 };
-
 typedef struct stackNode* stack_p;
+
+// struct astNode{
+// 	int nodeType;
+// 	char name[30];
+// 	struct astNode *children[MAX_AST_CHILDREN];
+// 	struct astNode *sibling;
+// };
+// typedef struct astNode ast_t;
+// typedef ast_t* ast_p;
+
+// struct astStack{
+// 	ast_p top;
+// 	struct astStack* next;
+// }
+// typedef struct astStack ast_stack_t;
+// typedef struct ast_stack_t* ast_stack_p;
+// #define AST_MAX_CHILDREN 3
+// #define AST_NAME_LENGTH 30
+
+// typedef enum{
+// 	AST_IF,
+// 	AST_ELSE,
+// 	AST_VAR_ID,
+// 	AST_FUN_ID,
+// 	AST_WHILE,
+// 	AST_RETURN,
+// 	AST_CONST,
+// 	AST_OPERAND,
+// 	AST_VAR_DECL,
+// 	AST_FUN_DECL,
+// 	AST_VAR_ATT,
+// 	AST_FUN_CALL
+// } ast_kind_t;
 
 #endif

@@ -1,7 +1,7 @@
 CC = gcc
 PROGRAM = cross
-WORKINGDIR = .
-INCDIRS=.
+WORKINGDIR = ./src
+INCDIRS=./src
 DEPFLAGS=-MP -MD
 CFILES=$(foreach D,$(WORKINGDIR),$(wildcard $(D)/*.c))
 OFILES=$(patsubst %.c,%.o,$(CFILES))
@@ -16,4 +16,4 @@ $(PROGRAM): $(OFILES)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm *.o
+	rm ./src/*.o ./src/*.d

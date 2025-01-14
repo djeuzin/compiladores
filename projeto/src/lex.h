@@ -39,10 +39,6 @@ extern token_t keywordsTokens[NUM_KEYWORDS];
 void allocate_buffer();
 void deallocate_buffer();
 
-// Manipulação do arquivo fonte
-void open_source_file(int, char*[]);
-void close_source_file();
-
 // Retorna o próximo caractere do buffer
 char get_next_char();
 
