@@ -7,26 +7,46 @@
 
 #include "parser.h"
 
-// Retira um elemento da pilha do parser e armazena seu valor na variável currentSymbol
+// Pilha de derivação da analisador sintático
+parser_stack_p parserStack;
+// Símbolo do topo da pilha
+int currentSymbol;
+
+/*
+ * Argumento: vazio
+ * Retorna: vazio
+ * Retira o elemento do topo da pilha de
+ * derivação e armazena o valor na variável
+ * currentSymbol.
+ */
 void pop_stack(){
 	currentSymbol = parserStack->symbol;
-	stack_p aux = parserStack;
+	parser_stack_p aux = parserStack;
 	parserStack = parserStack->next;
 	free(aux);
 }
 
-// Adiciona um elemento à pilha do parser
+/*
+ * Argumentos: int newSymbol, int kind
+ * Retorna: vazio
+ * Adiciona ao topo da pilha de derivação
+ * o novo símbolo e o seu tipo.
+ */
 void push_stack(int newSymbol, int kind){
-	stack_p aux = malloc(sizeof(struct stackNode));
+	parser_stack_p aux = malloc(sizeof(struct stackNode));
 	aux->symbol = newSymbol;
 	aux->kind = kind;
 	aux->next = parserStack;
 	parserStack = aux;
 }
 
-// Libera a memória utilizada pela pilha
+/*
+ * Agumento: vazio
+ * Retorna: vazio
+ * Libera a memória utilizada pela pilha de derivação.
+ */
 void clear_stack(){
-	stack_p aux;
+	parser_stack_p aux;
 
 	while(parserStack){
 		aux = parserStack;
@@ -35,463 +55,410 @@ void clear_stack(){
 	}
 }
 
-// Inicializa a pilha do parser para a análise sintática
+/*
+ * Argumento: vazio
+ * Retorna: vazio
+ * Inicializa a pilha de derivação com o símbolo
+ * de fundo da pilha e o não terminal inicial.
+ */
 void init_stack(){
 	parserStack = NULL;
 	push_stack(ENDPARSE, 0);
 	push_stack(PROG, 0);
 }
 
-// Verifica se o símbolo atual da pilha é igual ao token lido pelo lexer
-void match(int currentSymbol, int token){
+/*
+ * Argumentos: int currentSymbol, int token
+ * Retorna: inteiro
+ * Compara currentSymbol com token. Se forem diferentes
+ * indica erro e retorna FALSE, caso contrário retorna TRUE
+ * indicando que houve sucesso na comparação.
+ */
+int match(int currentSymbol, int token){
         if(currentSymbol != token){
-                printf("Erro de casamento.\n \
-                \"%s\", simbolo: %d em linha %d \
-                 \n", mainLex.word, currentSymbol, mainLex.line);
-                exit(1);
+                printf("ERRO SINTATICO: \"%s\" INVALIDO [linha: %d], COLUNA %d.\n", mainLex.word, mainLex.line, mainLex.column);
+                return FALSE;
         }
+	return TRUE;
 }
 
-// Exibe os elementos da pilha
+/*
+ * Argumento: vazio
+ * Retorna: vazio
+ * Exibe os elementos da pilha de derivação.
+ */
 void print_stack(){
-        stack_p aux = parserStack;
+        parser_stack_p aux = parserStack;
         while(aux != NULL){
                 printf("%d-%d\n", aux->symbol, aux->kind);
                 aux = aux->next;
         }
 }
 
-// Função principal do parser
-// Utiliza a tabela preditiva LL(1) para analisar a sintaxe do arquivo fonte
+/*
+ * Argumento: vazio
+ * Retorna: vazio
+ * Função principal do parser. Realiza derivações mais à esquerda utilizando a pilha de derivação
+ * e constrói uma árvore de análise sintática abstrata representando
+ * a estrutura do programa parseado utilizando a tabela preditiva LL(1)
+ */
 void parse(){
-	// Indica qual o próximo passo na derivação deve ser tomado
+	allocate_buffer();
 	int nextStep;
 
 	init_stack();
 	get_next_lexem();
 
 	while(parserStack->symbol != ENDPARSE){
-		if(parserStack->kind){
-			// Se o símbolo no topo da pilha é um terminal, então 
-			// comparamos ele com o que é lido pelo lexer
+		switch(parserStack->kind){
+			case TERMINAL:
 			pop_stack();
-			match(currentSymbol, mainLex.token);
+			
+			if(!match(currentSymbol, mainLex.token)){
+				printf("Erro ao parsear\n");
+				clear_stack();
+				exit(1);
+			}
+			
 			get_next_lexem();
-		}
-		else{
-			// O símbolo no topo da pilha é um não terminal
-			// Verificamos qual passo de derivação deve ser tomado pela tabela
-			// Chamamos handle_stack() para manipular a pilha com a derivação correspondente
+			break;
+			case NON_TERMINAL:
 			pop_stack();
 			nextStep = parsingTable[currentSymbol][mainLex.token];
 			
 			if(nextStep == 0){
-                                printf("ERRO SINTATICO: \"%s\" INVALIDO [linha: %d], COLUNA %d.", mainLex.word, mainLex.line, mainLex.column);
+                                printf("ERRO SINTATICO: \"%s\" INVALIDO [linha: %d], COLUNA %d.\n", mainLex.word, mainLex.line, mainLex.column);
 				clear_stack();
-				return;
+				exit(1);
 			}
 
 			handle_stack(nextStep);
+			break;
+			case TREE_BUILDER:
+			pop_stack();
+			
+			break;
 		}
 	}
 
-	if(ENDFILE == mainLex.token)
-		printf("Programa parseado com sucesso.\n");
-	else{
-		printf("Erro ao parsear.\n");
-        }
-
 	clear_stack();
+	deallocate_buffer();
 }
 
-// Realiza os passos de derivação da gramática
+/*
+ * Argumento: int nextStep
+ * Retorna: vazio
+ * Realiza o passo de derivação correspondente à nextStep.
+ */
 void handle_stack(int nextStep){
 	switch(nextStep){
 		case 1:
-		push_stack(DECL_LIST, 0);
+		push_stack(DECL_LIST, NON_TERMINAL);
 		break;
 		case 2:
-		push_stack(DECL_LIST_, 0);
-		push_stack(DECLARATION, 0);
+		push_stack(DECL_LIST_, NON_TERMINAL);
+		push_stack(DECLARATION, NON_TERMINAL);
 		break;
 		case 3:
-		push_stack(DECL_LIST_, 0);
-		push_stack(DECLARATION, 0);
+		push_stack(DECL_LIST_, NON_TERMINAL);
+		push_stack(DECLARATION, NON_TERMINAL);
 		break;
 		case 4:
 		break;
 		case 5:
-		push_stack(DECLARATION_, 0);
-		push_stack(ID, 1);
-		push_stack(TYPE_SPEC, 0);
+		push_stack(DECLARATION_, NON_TERMINAL);
+		push_stack(ID, TERMINAL);
+		push_stack(TYPE_SPEC, NON_TERMINAL);
 		break;
 		case 6:
-		push_stack(VAR_DECL_, 0);
+		push_stack(VAR_DECL_, NON_TERMINAL);
 		break;
 		case 7:
-		push_stack(COMP_STMT, 0);
-		push_stack(CL_PAR, 1);
-		push_stack(PARAMS, 0);
-		push_stack(OP_PAR, 1);
+		push_stack(COMP_STMT, NON_TERMINAL);
+		push_stack(CL_PAR, TERMINAL);
+		push_stack(PARAMS, NON_TERMINAL);
+		push_stack(OP_PAR, TERMINAL);
 		break;
 		case 8:
-		push_stack(VAR_DECL_, 0);
-		push_stack(ID, 1);
-		push_stack(TYPE_SPEC, 0);
+		push_stack(VAR_DECL_, NON_TERMINAL);
+		push_stack(ID, TERMINAL);
+		push_stack(TYPE_SPEC, NON_TERMINAL);
 		break;
 		case 9:
-		push_stack(SCOL, 1);
+		push_stack(SCOL, TERMINAL);
 		break;
 		case 10:
-		push_stack(SCOL, 1);
-		push_stack(CL_BRA, 1);
-		push_stack(NUM, 1);
-		push_stack(OP_BRA, 1);
+		push_stack(SCOL, TERMINAL);
+		push_stack(CL_BRA, TERMINAL);
+		push_stack(NUM, TERMINAL);
+		push_stack(OP_BRA, TERMINAL);
 		break;
 		case 11:
-		push_stack(INT, 1);
+		push_stack(INT, TERMINAL);
 		break;
 		case 12:
-		push_stack(VOID, 1);
+		push_stack(VOID, TERMINAL);
 		break;
 		case 13:
-		push_stack(PARAM_LIST_, 0);
-		push_stack(PARAM_, 0);
-		push_stack(ID, 1);
-		push_stack(INT, 1);
+		push_stack(PARAM_LIST_, NON_TERMINAL);
+		push_stack(PARAM_, NON_TERMINAL);
+		push_stack(ID, TERMINAL);
+		push_stack(INT, TERMINAL);
 		break;
 		case 14:
-		push_stack(VOID_PARAMS, 0);
-		push_stack(VOID, 1);
+		push_stack(VOID_PARAMS, NON_TERMINAL);
+		push_stack(VOID, TERMINAL);
 		break;
 		case 15:
-		push_stack(PARAM_LIST_, 0);
-		push_stack(PARAM_, 0);
-		push_stack(ID, 1);
+		push_stack(PARAM_LIST_, NON_TERMINAL);
+		push_stack(PARAM_, NON_TERMINAL);
+		push_stack(ID, TERMINAL);
 		break;
 		case 16:
 		break;
 		case 17:
-		push_stack(PARAM_LIST_, 0);
-		push_stack(PARAM, 0);
+		push_stack(PARAM_LIST_, NON_TERMINAL);
+		push_stack(PARAM, NON_TERMINAL);
 		break;
 		case 18:
-		push_stack(PARAM_LIST_, 0);
-		push_stack(PARAM, 0);
-		push_stack(COMMA, 1);
+		push_stack(PARAM_LIST_, NON_TERMINAL);
+		push_stack(PARAM, NON_TERMINAL);
+		push_stack(COMMA, TERMINAL);
 		break;
 		case 19:
 		break;
 		case 20:
-		push_stack(PARAM_, 0);
-		push_stack(ID, 1);
-		push_stack(TYPE_SPEC, 0);
+		push_stack(PARAM_, NON_TERMINAL);
+		push_stack(ID, TERMINAL);
+		push_stack(TYPE_SPEC, NON_TERMINAL);
 		break;
 		case 21:
-		push_stack(CL_BRA, 1);
-		push_stack(OP_BRA, 1);
+		push_stack(CL_BRA, TERMINAL);
+		push_stack(OP_BRA, TERMINAL);
 		break;
 		case 22:
 		break;
 		case 23:
-		push_stack(CL_CUR, 1);
-		push_stack(STMT_LIST, 0);
-		push_stack(LOCAL_DECL, 0);
-		push_stack(OP_CUR, 1);
+		push_stack(CL_CUR, TERMINAL);
+		push_stack(STMT_LIST, NON_TERMINAL);
+		push_stack(LOCAL_DECL, NON_TERMINAL);
+		push_stack(OP_CUR, TERMINAL);
 		break;
 		case 24:
-		push_stack(LOCAL_DECL_, 0);
+		push_stack(LOCAL_DECL_, NON_TERMINAL);
 		break;
 		case 25:
-		push_stack(LOCAL_DECL_, 0);
-		push_stack(VAR_DECL, 0);
+		push_stack(LOCAL_DECL_, NON_TERMINAL);
+		push_stack(VAR_DECL, NON_TERMINAL);
 		break;
 		case 26:
 		break;
 		case 27:
-		push_stack(STMT_LIST_, 0);
+		push_stack(STMT_LIST_, NON_TERMINAL);
 		break;
 		case 28:
-		push_stack(STMT_LIST_, 0);
-		push_stack(STATEMENT, 0);
+		push_stack(STMT_LIST_, NON_TERMINAL);
+		push_stack(STATEMENT, NON_TERMINAL);
 		break;
 		case 29:
 		break;
 		case 30:
-		push_stack(EXP_STMT, 0);
+		push_stack(EXP_STMT, NON_TERMINAL);
 		break;
 		case 31:
-		push_stack(COMP_STMT, 0);
+		push_stack(COMP_STMT, NON_TERMINAL);
 		break;
 		case 32:
-		push_stack(SELECTION_STMT, 0);
+		push_stack(SELECTION_STMT, NON_TERMINAL);
 		break;
 		case 33:
-		push_stack(ITERATION_STMT, 0);
+		push_stack(ITERATION_STMT, NON_TERMINAL);
 		break;
 		case 34:
-		push_stack(RETURN_STMT, 0);
+		push_stack(RETURN_STMT, NON_TERMINAL);
 		break;
 		case 35:
-		push_stack(SCOL, 1);
-		push_stack(EXPRESSION, 0);
+		push_stack(SCOL, TERMINAL);
+		push_stack(EXPRESSION, NON_TERMINAL);
 		break;
 		case 36:
-		push_stack(SCOL, 1);
+		push_stack(SCOL, TERMINAL);
 		break;
 		case 37:
-		push_stack(SELECTION_STMT_, 0);
-		push_stack(STATEMENT, 0);
-		push_stack(CL_PAR, 1);
-		push_stack(EXPRESSION, 0);
-		push_stack(OP_PAR, 1);
-		push_stack(IF, 1);
+		push_stack(SELECTION_STMT_, NON_TERMINAL);
+		push_stack(STATEMENT, NON_TERMINAL);
+		push_stack(CL_PAR, TERMINAL);
+		push_stack(EXPRESSION, NON_TERMINAL);
+		push_stack(OP_PAR, TERMINAL);
+		push_stack(IF, TERMINAL);
 		break;
 		case 38:
-		push_stack(STATEMENT, 0);
-		push_stack(ELSE, 1);
+		push_stack(STATEMENT, NON_TERMINAL);
+		push_stack(ELSE, TERMINAL);
 		break;
 		case 39:
 		break;
 		case 40:
-		push_stack(STATEMENT, 0);
-		push_stack(CL_PAR, 1);
-		push_stack(EXPRESSION, 0);
-		push_stack(OP_PAR, 1);
-		push_stack(WHILE, 1);
+		push_stack(STATEMENT, NON_TERMINAL);
+		push_stack(CL_PAR, TERMINAL);
+		push_stack(EXPRESSION, NON_TERMINAL);
+		push_stack(OP_PAR, TERMINAL);
+		push_stack(WHILE, TERMINAL);
 		break;
 		case 41:
-		push_stack(RETURN_STMT_, 0);
-		push_stack(RETURN, 1);
+		push_stack(RETURN_STMT_, NON_TERMINAL);
+		push_stack(RETURN, TERMINAL);
 		break;
 		case 42:
-		push_stack(SCOL, 1);
+		push_stack(SCOL, TERMINAL);
 		break;
 		case 43:
-		push_stack(SCOL, 1);
-		push_stack(EXPRESSION, 0);
+		push_stack(SCOL, TERMINAL);
+		push_stack(EXPRESSION, NON_TERMINAL);
 		break;
 		case 44:
-		push_stack(EXPRESSION_, 0);
-		push_stack(ID, 1);
+		push_stack(EXPRESSION_, NON_TERMINAL);
+		push_stack(ID, TERMINAL);
 		break;
 		case 45:
-		push_stack(SIMPLE_EXP, 0);
-		push_stack(ADD_EXP_, 0);
-		push_stack(TERM_, 0);
-		push_stack(CL_PAR, 1);
-		push_stack(EXPRESSION, 0);
-		push_stack(OP_PAR, 1);
+		push_stack(SIMPLE_EXP, NON_TERMINAL);
+		push_stack(ADD_EXP_, NON_TERMINAL);
+		push_stack(TERM_, NON_TERMINAL);
+		push_stack(CL_PAR, TERMINAL);
+		push_stack(EXPRESSION, NON_TERMINAL);
+		push_stack(OP_PAR, TERMINAL);
 		break;
 		case 46:
-		push_stack(SIMPLE_EXP, 0);
-		push_stack(ADD_EXP_, 0);
-		push_stack(TERM_, 0);
-		push_stack(NUM, 1);
+		push_stack(SIMPLE_EXP, NON_TERMINAL);
+		push_stack(ADD_EXP_, NON_TERMINAL);
+		push_stack(TERM_, NON_TERMINAL);
+		push_stack(NUM, TERMINAL);
 		break;
 		case 47:
-		push_stack(EXPRESSION__, 0);
-		push_stack(VAR_, 0);
+		push_stack(EXPRESSION__, NON_TERMINAL);
+		push_stack(VAR_, NON_TERMINAL);
 		break;
 		case 48:
-		push_stack(SIMPLE_EXP, 0);
-		push_stack(ADD_EXP_, 0);
-		push_stack(TERM_, 0);
-		push_stack(CL_PAR, 1);
-		push_stack(ARGS, 0);
-		push_stack(OP_PAR, 1);
+		push_stack(SIMPLE_EXP, NON_TERMINAL);
+		push_stack(ADD_EXP_, NON_TERMINAL);
+		push_stack(TERM_, NON_TERMINAL);
+		push_stack(CL_PAR, TERMINAL);
+		push_stack(ARGS, NON_TERMINAL);
+		push_stack(OP_PAR, TERMINAL);
 		break;
 		case 49:
-		push_stack(EXPRESSION, 0);
-		push_stack(ATT, 1);
+		push_stack(EXPRESSION, NON_TERMINAL);
+		push_stack(ATT, TERMINAL);
 		break;
 		case 50:
-		push_stack(SIMPLE_EXP, 0);
-		push_stack(ADD_EXP_, 0);
-		push_stack(TERM_, 0);
+		push_stack(SIMPLE_EXP, NON_TERMINAL);
+		push_stack(ADD_EXP_, NON_TERMINAL);
+		push_stack(TERM_, NON_TERMINAL);
 		break;
 		case 51:
-		push_stack(VAR_, 0);
-		push_stack(ID, 1);
+		push_stack(VAR_, NON_TERMINAL);
+		push_stack(ID, TERMINAL);
 		break;
 		case 52:
-		push_stack(CL_BRA, 1);
-		push_stack(EXPRESSION, 0);
-		push_stack(OP_BRA, 1);
+		push_stack(CL_BRA, TERMINAL);
+		push_stack(EXPRESSION, NON_TERMINAL);
+		push_stack(OP_BRA, TERMINAL);
 		break;
 		case 53:
 		break;
 		case 54:
-		push_stack(ADD_EXP, 0);
-		push_stack(RELOP, 0);
+		push_stack(ADD_EXP, NON_TERMINAL);
+		push_stack(RELOP, NON_TERMINAL);
 		break;
 		case 55:
 		break;
 		case 56:
-		push_stack(LEQUAL, 1);
+		push_stack(LEQUAL, TERMINAL);
 		break;
 		case 57:
-		push_stack(LTHAN, 1);
+		push_stack(LTHAN, TERMINAL);
 		break;
 		case 58:
-		push_stack(GTHAN, 1);
+		push_stack(GTHAN, TERMINAL);
 		break;
 		case 59:
-		push_stack(GEQUAL, 1);
+		push_stack(GEQUAL, TERMINAL);
 		break;
 		case 60:
-		push_stack(EQUAL, 1);
+		push_stack(EQUAL, TERMINAL);
 		break;
 		case 61:
-		push_stack(DIFF, 1);
+		push_stack(DIFF, TERMINAL);
 		break;
 		case 62:
-		push_stack(ADD_EXP_, 0);
-		push_stack(TERM, 0);
+		push_stack(ADD_EXP_, NON_TERMINAL);
+		push_stack(TERM, NON_TERMINAL);
 		break;
 		case 63:
-		push_stack(ADD_EXP_, 0);
-		push_stack(TERM, 0);
-		push_stack(ADDOP, 0);
+		push_stack(ADD_EXP_, NON_TERMINAL);
+		push_stack(TERM, NON_TERMINAL);
+		push_stack(ADDOP, NON_TERMINAL);
 		break;
 		case 64:
 		break;
 		case 65:
-		push_stack(PLUS, 1);
+		push_stack(PLUS, TERMINAL);
 		break;
 		case 66:
-		push_stack(MINUS, 1);
+		push_stack(MINUS, TERMINAL);
 		break;
 		case 67:
-		push_stack(TERM_, 0);
-		push_stack(FACTOR, 0);
+		push_stack(TERM_, NON_TERMINAL);
+		push_stack(FACTOR, NON_TERMINAL);
 		break;
 		case 68:
-		push_stack(TERM_, 0);
-		push_stack(FACTOR, 0);
-		push_stack(MULOP, 0);
+		push_stack(TERM_, NON_TERMINAL);
+		push_stack(FACTOR, NON_TERMINAL);
+		push_stack(MULOP, NON_TERMINAL);
 		break;
 		case 69:
 		break;
 		case 70:
-		push_stack(AST, 1);
+		push_stack(AST, TERMINAL);
 		break;
 		case 71:
-		push_stack(DASH, 1);
+		push_stack(DASH, TERMINAL);
 		break;
 		case 72:
-		push_stack(CL_PAR, 1);
-		push_stack(EXPRESSION, 0);
-		push_stack(OP_PAR, 1);
+		push_stack(CL_PAR, TERMINAL);
+		push_stack(EXPRESSION, NON_TERMINAL);
+		push_stack(OP_PAR, TERMINAL);
 		break;
 		case 73:
-		push_stack(FACTOR_, 0);
-		push_stack(ID, 1);
+		push_stack(FACTOR_, NON_TERMINAL);
+		push_stack(ID, TERMINAL);
 		break;
 		case 74:
-		push_stack(NUM, 1);
+		push_stack(NUM, TERMINAL);
 		break;
 		case 75:
-		push_stack(VAR_, 0);
+		push_stack(VAR_, NON_TERMINAL);
 		break;
 		case 76:
-		push_stack(CL_PAR, 1);
-		push_stack(ARGS, 0);
-		push_stack(OP_PAR, 1);
+		push_stack(CL_PAR, TERMINAL);
+		push_stack(ARGS, NON_TERMINAL);
+		push_stack(OP_PAR, TERMINAL);
 		break;
 		case 77:
-		push_stack(ARG_LIST, 0);
+		push_stack(ARG_LIST, NON_TERMINAL);
 		break;
 		case 78:
 		break;
 		case 79:
-		push_stack(ARG_LIST_, 0);
-		push_stack(EXPRESSION, 0);
+		push_stack(ARG_LIST_, NON_TERMINAL);
+		push_stack(EXPRESSION, NON_TERMINAL);
 		break;
 		case 80:
-		push_stack(ARG_LIST_, 0);
-		push_stack(EXPRESSION, 0);
-		push_stack(COMMA, 1);
+		push_stack(ARG_LIST_, NON_TERMINAL);
+		push_stack(EXPRESSION, NON_TERMINAL);
+		push_stack(COMMA, TERMINAL);
 		break;
 		case 81:
 		break;
 	}
 }
-
-/*-------------ast functions*--------*/
-// ast_stack_p ast_init_stack(){
-// 	ast_stack_p newAstStack = malloc(sizeof(ast_stack_t));
-// 	newAstStack = NULL;
-// 	return newAstStack;
-// }
-
-// ast_stack_p ast_push_stack(ast_stack_p astStack, ast_p treeNode){
-// 	ast_stack_p newAstStack = malloc(sizeof(ast_stack_t));
-// 	newAstStack->top = treeNode;
-// 	newAstStack->next = astStack;
-// 	astStack = newAstStack;
-// 	return astStack;
-// }
-
-// ast_p ast_pop_stack(ast_stack_p, astStack){
-// 	ast_p aux = astStack->top;
-// 	ast_stack_p auxStack = astStack;
-// 	astStack = astStack->next;
-// 	free(auxStack);
-// 	return aux;
-// }
-
-// ast_p ast_clear_tree(ast_p tree){
-// 	if(tree == NULL)
-// 		return NULL;
-
-// 	tree->sibling = ast_clear_tree(tree->sibling);
-// 	for(int i=0; i<AST_MAX_CHILDREN; i++)
-// 		tree->children[i] = ast_clear_tree(tree->children[i]);
-
-// 	free(tree);
-// 	return NULL;
-// }
-
-// ast_stack_p ast_clear_stack(ast_stack_p astStack){
-// 	ast_stack_p aux;
-
-// 	while(astStack){
-// 		aux = astStack;
-// 		astStack = astStack->next;
-// 		aux->top = ast_clear_tree(aux->top);
-// 		free(aux);
-// 	}
-
-// 	return NULL;
-// }
-
-// ast_p ast_create_node(int value, ast_kind_t kind, char name[]){
-// 	ast_p newNode = malloc(sizeof(ast_t));
-	
-// 	newNode->sibling = NULL;
-// 	newNode->value = value;
-// 	newNode->name = name;
-// 	newNode->kind = kind;
-
-// 	for(int i=0; i<AST_MAX_CHILDREN; i++)
-// 		newNode->children[i] = NULL;
-
-// 	return newNode;
-// }
-
-// int ast_ignored_token(token_t token){
-// 	switch(token){
-// 		case OP_PAR:
-// 		case CL_PAR:
-// 		case OP_BRA:
-// 		case CL_BRA:
-// 		case OP_CUR:
-// 		case CL_CUR:
-// 		case COMMA:
-// 		case SCOL:
-// 		return TRUE;
-// 		default:
-// 		return FALSE;
-// 	}
-// }

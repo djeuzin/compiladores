@@ -7,13 +7,24 @@
 
 #include "lex.h"
 
+/* Variáveis globais do lexer */
+// Buffer do arquivo fonte
+buffer_t mainBuffer;
+
+// Lexema que será enviado ao parser
+lex_t mainLex;
+
 // Definição dos arrays que armazenam as palavras chaves e os respectivos hashs
 char keywords[NUM_KEYWORDS][30] = {"else", "if", "int", "return", "void", "while"};
 token_t keywordsTokens[NUM_KEYWORDS] = {ELSE, IF, INT, RETURN, VOID, WHILE};
 unsigned int keywordsHash[NUM_KEYWORDS] = {0};
 
-// Aloca um buffer para ler os caracteres do arquivo fonte
-// e organiza os atributos do buffer para ser carregado propriamente.
+/*
+ * Argumentos: vazio
+ * Rertona: vazio
+ * Aloca um vetor de caracteres na estrutura mainBuffer
+ * onde será armazenado o fluxo de caracteres do arquivo fonte.
+ */
 void allocate_buffer(){
         mainBuffer.buffer = malloc((BUFFER_SIZE+1)*sizeof(char));
         if(!(mainBuffer.buffer)){
@@ -29,15 +40,24 @@ void allocate_buffer(){
         mainBuffer.used = 1;
 }
 
-// Libera a memória utilizada pelo buffer
+/*
+ * Argumentos: vazio
+ * Retorna: vazio
+ * Libera a memória alocada para o buffer.
+ */
 void deallocate_buffer(){
         free(mainBuffer.buffer);
         mainBuffer.buffer = NULL;
 }
 
-// Carrega o buffer se estiver vazio (próximo caractare é \0)
-// Se o caractere foi utilizado incrementa o índice
-// Retorna o caractere do índice
+/*
+ * Argumentos: vazio
+ * Retorna: caractere
+ * Checa se o buffer está vazio e se o caractere foi consumido.
+ * Caso o buffer esteja vazio, preenche ele ou retorna EOF.
+ * Caso o caractere tenha sido consumido, aumenta o índice do buffer.
+ * Retorna o caractere apontado pelo índice.
+ */
 char get_next_char(){
     if(mainBuffer.used){
         if(mainBuffer.buffer[mainBuffer.index + 1] == '\0'){
@@ -59,9 +79,13 @@ char get_next_char(){
     return mainBuffer.buffer[mainBuffer.index];
 }
 
-// Para cada caractere, percorre a tabela de transição.
-// Se chegar em um estado de aceitação, retorna o lexema.
-// Caso contrário continua adicionando caracteres à palavra do lexema.
+/*
+ * Argumentos: vazio
+ * Retorna: vazio
+ * A partir de cada caractere do fluxo do arquivo fonte
+ * percorre o DFA do analisador léxico e classifica os lexemas
+ * na estrutura mainLex.
+ */
 void get_next_lexem(){
         char c = get_next_char();
         mainBuffer.used = 0;
@@ -108,8 +132,13 @@ void get_next_lexem(){
                 wrap_lexem();
 }
 
-// Verifica se o token da palavra está correto e retorna
-// Se for um identificador verificamos se é uma palavra chave
+/*
+ * Argumento: vazio
+ * Retorna: token_t (int)
+ * Assegura que o token do lexema está correto
+ * checando se é palavra chave ou se é um token de erro.
+ * Retorna o token correto.
+ */
 token_t assert_token(){
         if(mainLex.token == ID)
                 return check_keyword();
@@ -133,7 +162,12 @@ token_t assert_token(){
         return mainLex.token;
 }
 
-// Checa se o identificador é uma palavra chave por meio de hashing
+/*
+ * Argumentos: vazio 
+ * Retorna: token_t (int)
+ * Checa se o token do lexema é uma palavra chave
+ * por meio de hashing.
+ */
 token_t check_keyword(){
     if(mainLex.size < MIN_KEYWORD_LENGTH || mainLex.size > MAX_KEYWORD_LENGTH)
         return ID;
@@ -157,7 +191,12 @@ token_t check_keyword(){
     return ID;
 }
 
-// Embrulha o lexema para a utilização do parser
+/*
+ * Argumentos: vazio
+ * Retorna: vazio
+ * Prepara o lexema para o parser e indica
+ * se é um token de erro. 
+ */
 void wrap_lexem(){
         mainLex.word[mainLex.size] = '\0';
         mainLex.token = assert_token();
@@ -167,10 +206,13 @@ void wrap_lexem(){
                 print_lexem(mainLex);
 }
 
-// Dado um caractere retorna o índice correspondente na tabela de transição.
-// Além de ser o índicde na tabela de transição, o valor retornado também corresponde 
-// a definição enum de cada marca. Assim, ao obter o índice na tablea de transição para 
-// percorrer o DFA, o aproveitamos para classificar o lexema durante a leitura.
+/*
+ * Argumento: caractere
+ * Retorna: inteiro
+ * Retorna o índice correspondente do caractere
+ * na tabela de transição do DFA. O índice também
+ * corresponde ao token.
+ */
 int get_delta_index(char c){
         switch(c){
                 case '+':
@@ -219,7 +261,13 @@ int get_delta_index(char c){
         return 18;
 }
 
-// Gera um hash para uma palavra
+/*
+ * Argumento: string
+ * Retorna: chave hash
+ * Calcula o hash da palavra lida pelo lexer.
+ * Se houver uma letra maiúscula ou digito 
+ * na palavra, retorna o token ID.
+ */
 int hash_function(char *word){
     unsigned int hash = 0;
     int i = 0, c = word[i];
@@ -238,7 +286,12 @@ int hash_function(char *word){
     return hash;
 }
 
-// Inicializa os hashs das palavras chave
+/*
+ * Argumento: vazio
+ * Retorna: vazio
+ * Gera os hashs das palavras-chave e armazena-os
+ * no vetor keywordsHash
+ */
 void generate_keywords_hash(){
     for(int i=0; i<NUM_KEYWORDS; i++)
         keywordsHash[i] = hash_function(keywords[i]);

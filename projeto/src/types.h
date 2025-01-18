@@ -9,15 +9,31 @@
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
+// Tamanho do buffer do analisador léxico
 #define BUFFER_SIZE 256
+
+// Definições auxiliares para interagir com flags
 #define TRUE 1
 #define FALSE 0
-#define MAX_AST_CHILDREN 3
+
+// Número máximo de filhos de um nó da árvore sintática abstrata
+#define AST_MAX_CHILDREN 3
+// Tamanho máximo dos identificadores
+#define ID_LENGTH 30
+
+// Índices dos fihos do nó da árvore sintática abstrata
+#define PARAM_CHILD 0
+#define EXP_CHILD 0
+#define STMT_CHILD 1
+#define LEFT_CHILD 0
+#define RIGHT_CHILD 1
+#define ELSE_CHILD 2
 
 // Para definir os tipos utiliza-se sufixo _t
 // Para ponteiros de tipos utiliza-se o sufixo _p
 
 /*-----Definições de tipos para o lexer-----*/
+
 // Definição dos tokens dos lexemas
 typedef enum{
         ID, NUM,
@@ -54,7 +70,7 @@ typedef struct{
         char* buffer;
 }buffer_t;
 
-// Armazena os lexemas obtidos
+// Armazena os lexemas classificados
 typedef struct{
         unsigned int line;
         unsigned int size;
@@ -114,51 +130,72 @@ typedef enum{
 	ENDPARSE // Demarca o final da pilha do parser
 } non_terminal_t;
 
+// Definições dos tipos de nós da pilha de derivação
 typedef enum{
 	NON_TERMINAL,
 	TERMINAL,
 	TREE_BUILDER
 } parser_stack_kind_t;
 
-// Nó da pilha principal do parser
+// Definições dos tipos de nó da árvore sintática
+typedef enum{
+	AST_IF,
+	AST_WHILE,
+	AST_RETURN,
+	AST_ARRAY,
+	AST_ARRAY_ARG,
+	AST_ARRAY_DECL,
+	AST_VAR,
+	AST_VAR_ARG,
+	AST_VAR_DECL,
+	AST_FUN,
+	AST_FUN_DECL,
+	AST_CONST,
+	AST_OPERAND,
+	AST_ASSIGNMENT
+} ast_node_type_t;
+
+// Indicam ao parser qual ação tomar para construir a árvore sintática abstrata
+typedef enum{
+	ADD_EXP_CHILD,
+	ADD_SMT_CHILD,
+	BUILD_EXP,
+	ADD_PARAM_CHILD,
+	ADD_SIBLING,
+	ADD_ELSE_CHILD
+} ast_action_t;
+
+// Nó da pilha principal de derivação
 struct stackNode{
 	int symbol;
 	parser_stack_kind_t kind;
 	struct stackNode* next;
 };
-typedef struct stackNode* stack_p;
+typedef struct stackNode* parser_stack_p;
 
-// struct astNode{
-// 	int nodeType;
-// 	char name[30];
-// 	struct astNode *children[MAX_AST_CHILDREN];
-// 	struct astNode *sibling;
-// };
-// typedef struct astNode ast_t;
-// typedef ast_t* ast_p;
+// Nó da árvore sintática abstrata
+struct astNode{
+	char* name;
+	ast_node_type_t type;
+	token_t token;
+	int typeSpecifier;
+	int value;
+	char id[ID_LENGTH];
+	int arraySize;
+	int line;
+	int column;
+	struct astNode* sibling;
+	struct astNode* children[AST_MAX_CHILDREN];
+};
+typedef struct astNode ast_t;
+typedef ast_t* ast_p;
 
-// struct astStack{
-// 	ast_p top;
-// 	struct astStack* next;
-// }
-// typedef struct astStack ast_stack_t;
-// typedef struct ast_stack_t* ast_stack_p;
-// #define AST_MAX_CHILDREN 3
-// #define AST_NAME_LENGTH 30
-
-// typedef enum{
-// 	AST_IF,
-// 	AST_ELSE,
-// 	AST_VAR_ID,
-// 	AST_FUN_ID,
-// 	AST_WHILE,
-// 	AST_RETURN,
-// 	AST_CONST,
-// 	AST_OPERAND,
-// 	AST_VAR_DECL,
-// 	AST_FUN_DECL,
-// 	AST_VAR_ATT,
-// 	AST_FUN_CALL
-// } ast_kind_t;
+// Pilha auxiliar para construir a árvore sintática abstrata
+struct astStack{
+	ast_p top;
+	struct astStack* next;
+};
+typedef struct astStack ast_stack_t;
+typedef ast_stack_t* ast_stack_p;
 
 #endif

@@ -27,18 +27,4 @@ int lexOnly = FALSE;
 // Arquivo fonte que será analisado
 FILE* sourceFile;
 
-/* Variáveis usadas pelo analisador léxico */
-// Buffer do analisador léxico
-buffer_t mainBuffer;
-
-// Estrutura que armazena cada lexema ao ser lido
-lex_t mainLex;
-
-/* Variáveis utilizadas pelo parser */
-// Pilha de derivação doa analisador sintático
-stack_p parserStack;
-
-// Símbolo do topo da pilha, é atualizado ao ativar a rotina pop_stack()
-int currentSymbol;
-
 #endif

@@ -15,19 +15,23 @@
 #include "parser.h"
 #include "utils.h"
 
+#define TESTE
+
 int main(int argc, char* argv[]){
 	open_source_file(argc, argv);
-	allocate_buffer();
 
 	if(lexOnly){
+		allocate_buffer();
+
 		while(mainLex.token != ENDFILE)
 			get_next_lexem();
+			
+		deallocate_buffer();
 	}
 	else{
 		parse();
 	}
 	
-	deallocate_buffer();
 	close_source_file();
 
 	return 0;

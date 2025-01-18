@@ -57,46 +57,47 @@ int parsingTable[][44]= {
 };
 
 /*
-program 			-> declaration-list
+
+program 		-> declaration-list
 declaration-list 	-> declaration declaration-list_
 declaration-list_ 	-> declaration declaration-list_
-declaration-list_ 	-> eps
+declaration-list_ 	-> 
 declaration 		-> type-specifier ID declaration_
 declaration_ 		-> var-declaration_ 
 declaration_ 		-> ( params ) compound-stmt
 var-declaration 	-> type-specifier ID var-declaration_
-var-declaration_ 	-> ; 
+var-declaration_ 	-> ;
 var-declaration_ 	-> [ NUM ] ;
 type-speficier 		-> INT 
 type-speficier 		-> VOID
-params				-> INT ID param_ param-list_ 
-params 				-> VOID void-params
+params			-> INT ID param_ param-list_ 
+params 			-> VOID void-params
 void-params		-> ID param_ param-list_ 
-void-params		-> eps
+void-params		-> 
 param-list 		-> param param-list_
 param-list_		-> , param param-list_ 
-param-list_ 		-> eps
-param 				-> type-specifier ID param_
+param-list_ 		-> 
+param 			-> type-specifier ID param_
 param_ 			-> [] 
-param_ 			-> eps
+param_ 			-> 
 compound-stmt 		-> { local-declarations statement-list }
-local-declarations -> local-declarations_
-local-declarations_-> var-declaration local-declarations_ 
-local-declarations_-> eps
-statement-list 	-> statement-list_
-statement-list_	-> statement statement-list_ 
-statement-list_	-> eps
-statement 			-> expression-stmt 
-statement 			-> compound-stmt 
-statement 			-> selection-stms 
-statement 			-> iteration-stmt 
-statement 			-> return-stmt
-expression-stmt 	-> expression ; 
+local-declarations 	-> local-declarations_
+local-declarations_	-> var-declaration local-declarations_ 
+local-declarations_	-> 
+statement-list 		-> statement-list_
+statement-list_		-> statement statement-list_ 
+statement-list_		-> 
+statement 		-> expression-stmt 
+statement 		-> compound-stmt 
+statement 		-> selection-stms 
+statement 		-> iteration-stmt 
+statement 		-> return-stmt
+expression-stmt 	-> expression; 
 expression-stmt 	-> ;
-selection-stmt 	-> IF ( expression ) statement selection-stmt_
-selection-stmt_	-> ELSE statement 
-selection-stmt_ 	-> eps
-iteration-stmt 	-> WHILE ( expression ) statement
+selection-stmt 		-> IF ( expression ) statement selection-stmt_
+selection-stmt_		-> ELSE statement
+selection-stmt_ 	-> 
+iteration-stmt 		-> WHILE ( expression ) statement
 return-stmt 		-> RETURN return-stmt_
 return-stmt_		-> ; 
 return-stmt_		-> expression ;
@@ -105,39 +106,39 @@ expression 		-> ( expression ) term_ add-expression_ simple-expression_
 expression 		-> NUM term_ add-expression_ simple-expression_
 expression_ 		-> var_ expression__ 
 expression_ 		-> (args) term_ add-expression_ simple-expression_
-expression__		-> = expression 
+expression__		-> = expression
 expression__ 		-> term_ add-expression_ simple-expression_
-var 				-> ID var_
-var_ 				-> [ expression ] 
-var_ 				-> eps
-simple-expression_	-> relop additive-expression 
-simple-expression_ -> eps
-relop 				-> <= 
-relop 				-> < 
-relop 				-> > 
-relop 				-> >= 
-relop 				-> == 
-relop 				-> !=
-additive-expression -> term add-expression_
+var 			-> ID var_
+var_ 			-> [ expression ]
+var_ 			-> 
+simple-expression_	-> relop additive-expression
+simple-expression_ 	-> 
+relop 			-> <= 
+relop 			-> < 
+relop 			-> > 
+relop 			-> >= 
+relop 			-> == 
+relop 			-> !=
+additive-expression 	-> term add-expression_
 add-expression_ 	-> addop term add-expression_
-add-expression_	-> eps
-addop 				-> + 
-addop 				-> -
-term 				-> factor term_
-term_				-> mulop factor term_ 
-term_ 				-> eps
-mulop 				-> * 
-mulop				-> /
+add-expression_		-> 
+addop 			-> + 
+addop 			-> -
+term 			-> factor term_
+term_			-> mulop factor term_ 
+term_ 			-> 
+mulop 			-> * 
+mulop			-> /
 factor 			-> ( expression ) 
 factor 			-> ID factor_ 
-factor 			-> NUM
-factor_ 			-> var_ 
-factor_ 			-> (args)
-args 				-> arg-list 
-args 				-> eps
-arg-list 			-> expression arg-list_
-arg-list_			-> , expression arg-list_
-arg-list_ 			-> eps
+factor 			-> NUM 
+factor_ 		-> var_ 
+factor_ 		-> (args)
+args 			-> arg-list 
+args 			-> 
+arg-list 		-> expression arg-list_
+arg-list_		-> , expression arg-list_
+arg-list_ 		-> 
 
 ----------------
 

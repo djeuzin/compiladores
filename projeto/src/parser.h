@@ -12,50 +12,45 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "types.h"
 #include "parsing_table.h"
 
-/* Tabela preditiva */
-extern int parsingTable[][44];
-
 /* Variáveis externas utilizadas */
+
+extern int parsingTable[][44];
 extern lex_t mainLex;
-extern stack_p parserStack;
+extern parser_stack_p parserStack;
 extern int currentSymbol;
 
-/* Função externa utilizada */
-extern void get_next_lexem();
+/* Funções externas utilizadas */
+
+extern void allocate_buffer(void);
+extern void deallocate_buffer(void);
+extern void get_next_lexem(void);
 
 // Retira o elemento do topo da pilha do parser
-void pop_stack();
+void pop_stack(void);
 
 // Adiciona um elemento à pilha do parser
 void push_stack(int, int);
 
 // Libera a memória utilizada pela pilha do parser
-void clear_stack();
+void clear_stack(void);
 
 // Inicializa a pilha do parser
-void init_stack();
+void init_stack(void);
 
 // Função principal do parser
-void parse();
+void parse(void);
 
 // Manipula a pilha de acordo com a tabela preditiva
 void handle_stack(int);
 
 // Verifica se o terminal no topo da pilha é igual ao terminal lido pelo lexer
-void match(int, int);
+int match(int, int);
 
 // Exibe a pilha
-void print_stack();
-
-// ast_stack_p ast_init_stack();
-// ast_stack_p ast_push_stack(ast_stack_p, ast_p);
-// ast_p ast_pop_stack(ast_stack_p);
-// ast_p ast_clear_tree(ast_p);
-// ast_p ast_create_node(int, ast_kind_t, char[]);
-// ast_stack_p ast_clear_stack(ast_stack_p);
-// int ast_ignored_token(token_t);
+void print_stack(void);
 
 #endif

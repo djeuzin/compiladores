@@ -9,6 +9,7 @@
 #ifndef _PARSING_TABLE_H_
 #define _PARSING_TABLE_H_
 
+// Tabela preditiva LL(1)
 extern int parsingTable[][44];
 
 #endif
