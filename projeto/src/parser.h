@@ -87,6 +87,4 @@ int hasChildren(ast_p);
 // Exibe a árvore sintática construída
 void print_ast(ast_p, int);
 
-void ast_print_stack(void);
-
 #endif

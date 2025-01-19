@@ -875,7 +875,8 @@ void build_tree(void){
  * Argumento: nó da árvore
  * Retorna: verdadeiro ou falso
  * Dado um nó retorna veradeiro se ele tiver filhos
- * ou falso caso não tenha nenhum filho.*/
+ * ou falso caso não tenha nenhum filho.
+ */
 int hasChildren(ast_p node){
 	for(int i=0; i<AST_MAX_CHILDREN; i++)
 		if(node->children[i])
@@ -917,12 +918,4 @@ void print_ast(ast_p root, int depth){
 	printf("\n");
 
 	print_ast(root->sibling, depth);
-}
-
-void ast_print_stack(){
-	ast_stack_p aux = treeNodeStack;
-	while(aux){
-		printf("nome: %s, token: %d, value: %d,	line: %d, column: %d\n", aux->top->name, aux->top->token, aux->top->value, aux->top->line, aux->top->column);
-		aux = aux->next;
-	}
 }
