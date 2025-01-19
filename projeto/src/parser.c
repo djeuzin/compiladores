@@ -157,9 +157,8 @@ void parse(){
 			case TREE_BUILDER:{
 				pop_stack();
 
-				if(errorFlag == FALSE){
+				if(errorFlag == FALSE)
 					build_tree();
-				}
 
 				break;
 			}
@@ -167,18 +166,18 @@ void parse(){
 	}
 
 	if(errorFlag == FALSE){	
-		if(treeNodeStack->next)
-			printf("Erro crítico: pilha auxiliar não contém somente a raiz da árvore.\n");
-		else{
-			syntaxTree = treeNodeStack->top;
-			treeNodeStack = treeNodeStack->next;
-		}
+		syntaxTree = ast_pop_stack();
+
+		if(parserFlag)
+			print_ast(syntaxTree, 1);
 
 		ast_clear_stack();
 
 		if(dummyNode)
 			free(dummyNode);
 		dummyNode = NULL;
+
+		syntaxTree = ast_clear_tree(syntaxTree);
 	}
 
 	clear_stack();
@@ -196,8 +195,10 @@ void handle_stack(int nextStep){
 		push_stack(DECL_LIST, NON_TERMINAL);
 		break;
 		case 2:
+		push_stack(ADD_SIBLING, TREE_BUILDER);
 		push_stack(DECL_LIST_, NON_TERMINAL);
 		push_stack(DECLARATION, NON_TERMINAL);
+		push_stack(ADD_SIBLING_STOPPER, TREE_BUILDER);
 		break;
 		case 3:
 		push_stack(DECL_LIST_, NON_TERMINAL);
@@ -214,9 +215,14 @@ void handle_stack(int nextStep){
 		push_stack(VAR_DECL_, NON_TERMINAL);
 		break;
 		case 7:
+		push_stack(ADD_STMT_CHILD, TREE_BUILDER);
 		push_stack(COMP_STMT, NON_TERMINAL);
+		push_stack(ADD_PARAM_CHILD, TREE_BUILDER);
+		push_stack(ADD_SIBLING, TREE_BUILDER);
 		push_stack(CL_PAR, TERMINAL);
 		push_stack(PARAMS, NON_TERMINAL);
+		push_stack(ADD_SIBLING_STOPPER, TREE_BUILDER);
+		push_stack(SET_FUN_DECL, TREE_BUILDER);
 		push_stack(OP_PAR, TERMINAL);
 		break;
 		case 8:
@@ -225,11 +231,13 @@ void handle_stack(int nextStep){
 		push_stack(TYPE_SPEC, NON_TERMINAL);
 		break;
 		case 9:
+		push_stack(SET_VAR_DECL, TREE_BUILDER);
 		push_stack(SCOL, TERMINAL);
 		break;
 		case 10:
 		push_stack(SCOL, TERMINAL);
 		push_stack(CL_BRA, TERMINAL);
+		push_stack(SET_ARRAY_DECL, TREE_BUILDER);
 		push_stack(NUM, TERMINAL);
 		push_stack(OP_BRA, TERMINAL);
 		break;
@@ -255,6 +263,7 @@ void handle_stack(int nextStep){
 		push_stack(ID, TERMINAL);
 		break;
 		case 16:
+		push_stack(SET_VOID_PARAM, TREE_BUILDER);
 		break;
 		case 17:
 		push_stack(PARAM_LIST_, NON_TERMINAL);
@@ -273,15 +282,19 @@ void handle_stack(int nextStep){
 		push_stack(TYPE_SPEC, NON_TERMINAL);
 		break;
 		case 21:
+		push_stack(SET_ARRAY_PARAM, TREE_BUILDER);
 		push_stack(CL_BRA, TERMINAL);
 		push_stack(OP_BRA, TERMINAL);
 		break;
 		case 22:
+		push_stack(SET_VAR_PARAM, TREE_BUILDER);
 		break;
 		case 23:
+		push_stack(ADD_SIBLING, TREE_BUILDER);
 		push_stack(CL_CUR, TERMINAL);
 		push_stack(STMT_LIST, NON_TERMINAL);
 		push_stack(LOCAL_DECL, NON_TERMINAL);
+		push_stack(ADD_SIBLING_STOPPER, TREE_BUILDER);
 		push_stack(OP_CUR, TERMINAL);
 		break;
 		case 24:
@@ -326,20 +339,25 @@ void handle_stack(int nextStep){
 		break;
 		case 37:
 		push_stack(SELECTION_STMT_, NON_TERMINAL);
+		push_stack(ADD_STMT_CHILD, TREE_BUILDER);
 		push_stack(STATEMENT, NON_TERMINAL);
+		push_stack(ADD_EXP_CHILD, TREE_BUILDER);
 		push_stack(CL_PAR, TERMINAL);
 		push_stack(EXPRESSION, NON_TERMINAL);
 		push_stack(OP_PAR, TERMINAL);
 		push_stack(IF, TERMINAL);
 		break;
 		case 38:
+		push_stack(ADD_ELSE_CHILD, TREE_BUILDER);
 		push_stack(STATEMENT, NON_TERMINAL);
 		push_stack(ELSE, TERMINAL);
 		break;
 		case 39:
 		break;
 		case 40:
+		push_stack(ADD_STMT_CHILD, TREE_BUILDER);
 		push_stack(STATEMENT, NON_TERMINAL);
+		push_stack(ADD_EXP_CHILD, TREE_BUILDER);
 		push_stack(CL_PAR, TERMINAL);
 		push_stack(EXPRESSION, NON_TERMINAL);
 		push_stack(OP_PAR, TERMINAL);
@@ -353,6 +371,7 @@ void handle_stack(int nextStep){
 		push_stack(SCOL, TERMINAL);
 		break;
 		case 43:
+		push_stack(ADD_EXP_CHILD, TREE_BUILDER);
 		push_stack(SCOL, TERMINAL);
 		push_stack(EXPRESSION, NON_TERMINAL);
 		break;
@@ -382,11 +401,16 @@ void handle_stack(int nextStep){
 		push_stack(SIMPLE_EXP, NON_TERMINAL);
 		push_stack(ADD_EXP_, NON_TERMINAL);
 		push_stack(TERM_, NON_TERMINAL);
+		push_stack(ADD_PARAM_CHILD, TREE_BUILDER);
+		push_stack(ADD_SIBLING, TREE_BUILDER);
 		push_stack(CL_PAR, TERMINAL);
 		push_stack(ARGS, NON_TERMINAL);
+		push_stack(ADD_SIBLING_STOPPER, TREE_BUILDER);
+		push_stack(SET_FUN_CALL, TREE_BUILDER);
 		push_stack(OP_PAR, TERMINAL);
 		break;
 		case 49:
+		push_stack(ADD_EXP_CHILD, TREE_BUILDER);
 		push_stack(EXPRESSION, NON_TERMINAL);
 		push_stack(ATT, TERMINAL);
 		break;
@@ -400,13 +424,17 @@ void handle_stack(int nextStep){
 		push_stack(ID, TERMINAL);
 		break;
 		case 52:
+		push_stack(ADD_EXP_CHILD, TREE_BUILDER);
 		push_stack(CL_BRA, TERMINAL);
 		push_stack(EXPRESSION, NON_TERMINAL);
+		push_stack(SET_ARRAY, TREE_BUILDER);
 		push_stack(OP_BRA, TERMINAL);
 		break;
 		case 53:
+		push_stack(SET_VAR, TREE_BUILDER);
 		break;
 		case 54:
+		push_stack(BUILD_EXP, TREE_BUILDER);
 		push_stack(ADD_EXP, NON_TERMINAL);
 		push_stack(RELOP, NON_TERMINAL);
 		break;
@@ -436,6 +464,7 @@ void handle_stack(int nextStep){
 		break;
 		case 63:
 		push_stack(ADD_EXP_, NON_TERMINAL);
+		push_stack(BUILD_EXP, TREE_BUILDER);
 		push_stack(TERM, NON_TERMINAL);
 		push_stack(ADDOP, NON_TERMINAL);
 		break;
@@ -453,6 +482,7 @@ void handle_stack(int nextStep){
 		break;
 		case 68:
 		push_stack(TERM_, NON_TERMINAL);
+		push_stack(BUILD_EXP, TREE_BUILDER);
 		push_stack(FACTOR, NON_TERMINAL);
 		push_stack(MULOP, NON_TERMINAL);
 		break;
@@ -480,8 +510,12 @@ void handle_stack(int nextStep){
 		push_stack(VAR_, NON_TERMINAL);
 		break;
 		case 76:
+		push_stack(ADD_PARAM_CHILD, TREE_BUILDER);
+		push_stack(ADD_SIBLING, TREE_BUILDER);
 		push_stack(CL_PAR, TERMINAL);
 		push_stack(ARGS, NON_TERMINAL);
+		push_stack(ADD_SIBLING_STOPPER, TREE_BUILDER);
+		push_stack(SET_FUN_CALL, TREE_BUILDER);
 		push_stack(OP_PAR, TERMINAL);
 		break;
 		case 77:
@@ -624,8 +658,8 @@ void set_dummy_data(){
 			dummyNode = NULL;
 			break;
 		case ATT:
-			dummyNode->name = "assignment";
-			dummyNode->type = AST_ASSIGNMENT;
+			treeNodeStack->top->name = "assignment";
+			treeNodeStack->top->type = AST_ASSIGNMENT;
 			ast_push_stack(dummyNode);
 			dummyNode = NULL;
 			break;
@@ -670,23 +704,19 @@ void set_dummy_data(){
 	}
 }
 
-/* Argumento: nó da árvore
+/* 
+ * Argumento: nó da árvore
  * Retorna: vazio
  * Coloca o nó no topo da pilha auxiliar
  */
 void ast_push_stack(ast_p node){
-	printf(" \
-	nome: %s, \
-	token: %d, \
-	value: %d, \
-	line: %d, \
-	column: %d, \
-	\n", node->name, node->token, node->value, node->line, node->column);
 	ast_stack_p aux = malloc(sizeof(ast_stack_t));
 
 	aux->top = node;
 	aux->next = treeNodeStack;
 	treeNodeStack = aux;
+	//ast_print_stack();
+	//printf("---------------\n");
 }
 
 /*
@@ -718,7 +748,7 @@ void build_tree(void){
 			ast_push_stack(dad);
 			break;
 		}
-		case ADD_SMT_CHILD: {
+		case ADD_STMT_CHILD: {
 			ast_p child = ast_pop_stack();
 			ast_p dad = ast_pop_stack();
 			dad->children[STMT_CHILD] = child;
@@ -737,6 +767,11 @@ void build_tree(void){
 			break;
 		}
 		case ADD_PARAM_CHILD: {
+			if(treeNodeStack->top->type == AST_SIBLING_STOPPER){
+				ast_p aux = ast_pop_stack();
+				free(aux);
+				break;
+			}
 			ast_p child = ast_pop_stack();
 			ast_p dad = ast_pop_stack();
 			dad->children[PARAM_CHILD] = child;
@@ -744,10 +779,19 @@ void build_tree(void){
 			break;
 		}
 		case ADD_SIBLING: {
+			if(treeNodeStack->top->type == AST_SIBLING_STOPPER){
+				break;
+			}
 			ast_p rightSibling = ast_pop_stack();
 			ast_p leftSibling = ast_pop_stack();
-			leftSibling->sibling = rightSibling;
-			ast_push_stack(leftSibling);
+			while(leftSibling->type != AST_SIBLING_STOPPER){
+				leftSibling->sibling = rightSibling;
+				ast_push_stack(leftSibling);
+				rightSibling = ast_pop_stack();
+				leftSibling = ast_pop_stack();
+			}
+			free(leftSibling);
+			ast_push_stack(rightSibling);
 			break;
 		}
 		case ADD_ELSE_CHILD: {
@@ -813,6 +857,17 @@ void build_tree(void){
 			dummyNode = NULL;
 			break;
 		}
+		case SET_VOID_PARAM: {
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		}
+		case ADD_SIBLING_STOPPER: {
+			ast_p auxNode = ast_create_node();
+			auxNode->name = "sibling-stopper";
+			auxNode->type = AST_SIBLING_STOPPER;
+			ast_push_stack(auxNode);
+		}
 	}
 }
 
@@ -838,31 +893,36 @@ void print_ast(ast_p root, int depth){
 	if(root == NULL)
 		return;
 
-	if(depth > 3)
-		depth = 3;
-	
 	for(int i=1; i<depth; i++)
-		printf("\t");
+		printf("    ");
 	
 	printf("<%s>", root->name);
 
 	if(hasChildren(root))
-		printf("(");
+		printf("(\n");
 	
-	if(depth < 3)
-		printf("\n");
-	
-	for(int i=0; i<AST_MAX_CHILDREN; i++)
+	for(int i=0; i<AST_MAX_CHILDREN; i++){
 		print_ast(root->children[i], depth+1);
+	}
 	
-	if(hasChildren(root))
-		printf(")\n");
-
+	if(hasChildren(root)){
+		for(int i=1; i<depth; i++)
+			printf("    ");
+		printf(")");
+	}
+	
 	if(root->sibling)
-		printf(", ");
+		printf(",");
 	
-	if(depth < 3)
-		printf("\n");
-	
+	printf("\n");
+
 	print_ast(root->sibling, depth);
+}
+
+void ast_print_stack(){
+	ast_stack_p aux = treeNodeStack;
+	while(aux){
+		printf("nome: %s, token: %d, value: %d,	line: %d, column: %d\n", aux->top->name, aux->top->token, aux->top->value, aux->top->line, aux->top->column);
+		aux = aux->next;
+	}
 }

@@ -59,28 +59,28 @@ int parsingTable[][44]= {
 /*
 
 program 		-> declaration-list
-declaration-list 	-> declaration declaration-list_
+declaration-list 	-> <ADD_SIBLING_STOPPER> declaration declaration-list_ <ADD_SIBLINGS>
 declaration-list_ 	-> declaration declaration-list_
 declaration-list_ 	-> 
 declaration 		-> type-specifier ID declaration_
 declaration_ 		-> var-declaration_ 
-declaration_ 		-> ( params ) compound-stmt
+declaration_ 		-> ( <SET_FUN_DECL> <ADD_SIBLING_STOPPER params ) <ADD_SIBLING> <ADD_PARAM_CHILD> compound-stmt <ADD_STMT_CHILD>
 var-declaration 	-> type-specifier ID var-declaration_
-var-declaration_ 	-> ;
-var-declaration_ 	-> [ NUM ] ;
+var-declaration_ 	-> ; <SET_VAR_DECL>
+var-declaration_ 	-> [ NUM <SET_ARRAY_DECL> ] ;
 type-speficier 		-> INT 
 type-speficier 		-> VOID
 params			-> INT ID param_ param-list_ 
 params 			-> VOID void-params
 void-params		-> ID param_ param-list_ 
-void-params		-> 
+void-params		-> <SET_VOID_PARAM>
 param-list 		-> param param-list_
 param-list_		-> , param param-list_ 
 param-list_ 		-> 
 param 			-> type-specifier ID param_
-param_ 			-> [] 
-param_ 			-> 
-compound-stmt 		-> { local-declarations statement-list }
+param_ 			-> [] <SET_ARRAY_PARAM>
+param_ 			-> <SET_VAR_PARAM>
+compound-stmt 		-> { <ADD_SIBLING_STOPPER> local-declarations statement-list } <ADD_SIBLING>
 local-declarations 	-> local-declarations_
 local-declarations_	-> var-declaration local-declarations_ 
 local-declarations_	-> 
@@ -94,24 +94,24 @@ statement 		-> iteration-stmt
 statement 		-> return-stmt
 expression-stmt 	-> expression; 
 expression-stmt 	-> ;
-selection-stmt 		-> IF ( expression ) statement selection-stmt_
-selection-stmt_		-> ELSE statement
+selection-stmt 		-> IF ( expression ) <ADD_EXP_CHILD> statement <ADD_STMT_CHILD> selection-stmt_
+selection-stmt_		-> ELSE statement <ADD_ELSE_CHILD>
 selection-stmt_ 	-> 
-iteration-stmt 		-> WHILE ( expression ) statement
+iteration-stmt 		-> WHILE ( expression ) <ADD_EXP_CHILD> statement <ADD_STMT_CHILD>
 return-stmt 		-> RETURN return-stmt_
 return-stmt_		-> ; 
-return-stmt_		-> expression ;
+return-stmt_		-> expression ; <ADD_EXP_CHILD>
 expression 		-> ID expression_
 expression 		-> ( expression ) term_ add-expression_ simple-expression_ 
 expression 		-> NUM term_ add-expression_ simple-expression_
 expression_ 		-> var_ expression__ 
-expression_ 		-> (args) term_ add-expression_ simple-expression_
-expression__		-> = expression
+expression_ 		-> ( <SET_FUN_CALL> <ADD_SIBLING_STOPPER> args ) <ADD_SIBLING> <ADD_PARAM_CHILD> term_ add-expression_ simple-expression_
+expression__		-> = expression <ADD_EXP_CHILD>
 expression__ 		-> term_ add-expression_ simple-expression_
 var 			-> ID var_
-var_ 			-> [ expression ]
-var_ 			-> 
-simple-expression_	-> relop additive-expression
+var_ 			-> [ <SET_ARRAY> expression ] <ADD_EXP_CHILD>
+var_ 			-> <SET_VAR>
+simple-expression_	-> relop additive-expression <BUILD_EXP>
 simple-expression_ 	-> 
 relop 			-> <= 
 relop 			-> < 
@@ -120,12 +120,12 @@ relop 			-> >=
 relop 			-> == 
 relop 			-> !=
 additive-expression 	-> term add-expression_
-add-expression_ 	-> addop term add-expression_
+add-expression_ 	-> addop term <BUILD_EXP> add-expression_
 add-expression_		-> 
 addop 			-> + 
 addop 			-> -
 term 			-> factor term_
-term_			-> mulop factor term_ 
+term_			-> mulop factor <BUILD_EXP> term_ 
 term_ 			-> 
 mulop 			-> * 
 mulop			-> /
@@ -133,7 +133,7 @@ factor 			-> ( expression )
 factor 			-> ID factor_ 
 factor 			-> NUM 
 factor_ 		-> var_ 
-factor_ 		-> (args)
+factor_ 		-> ( <SET_FUN_CALL> <ADD_SIBLING_STOPPER> args ) <ADD_SIBLING> <ADD_PARAM_CHILD>
 args 			-> arg-list 
 args 			-> 
 arg-list 		-> expression arg-list_

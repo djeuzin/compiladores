@@ -25,6 +25,7 @@ extern int currentSymbol;
 extern ast_p dummyNode;
 extern ast_stack_p treeNodeStack;
 extern ast_p syntaxTree;
+extern int parserFlag;
 
 /* Funções externas utilizadas */
 
@@ -85,5 +86,7 @@ int hasChildren(ast_p);
 
 // Exibe a árvore sintática construída
 void print_ast(ast_p, int);
+
+void ast_print_stack(void);
 
 #endif

@@ -16,4 +16,4 @@ $(PROGRAM): $(OFILES)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm ./src/*.o ./src/*.d
+	rm ./src/*.o ./src/*.d cross
