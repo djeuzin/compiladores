@@ -143,16 +143,17 @@ typedef enum{
 	AST_WHILE,
 	AST_RETURN,
 	AST_ARRAY,
-	AST_ARRAY_ARG,
+	AST_ARRAY_PARAM,
 	AST_ARRAY_DECL,
 	AST_VAR,
-	AST_VAR_ARG,
+	AST_VAR_PARAM,
 	AST_VAR_DECL,
 	AST_FUN,
 	AST_FUN_DECL,
 	AST_CONST,
 	AST_OPERAND,
-	AST_ASSIGNMENT
+	AST_ASSIGNMENT,
+	AST_VOID
 } ast_node_type_t;
 
 // Indicam ao parser qual ação tomar para construir a árvore sintática abstrata
@@ -162,7 +163,15 @@ typedef enum{
 	BUILD_EXP,
 	ADD_PARAM_CHILD,
 	ADD_SIBLING,
-	ADD_ELSE_CHILD
+	ADD_ELSE_CHILD,
+	SET_VAR,
+	SET_ARRAY,
+	SET_VAR_PARAM,
+	SET_ARRAY_PARAM,
+	SET_VAR_DECL,
+	SET_ARRAY_DECL,
+	SET_FUN_DECL,
+	SET_FUN_CALL
 } ast_action_t;
 
 // Nó da pilha principal de derivação

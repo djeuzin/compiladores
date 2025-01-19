@@ -11,6 +11,10 @@
 parser_stack_p parserStack;
 // Símbolo do topo da pilha
 int currentSymbol;
+// Nó da árvore que receberá os dados lidos pelo lexer
+ast_p dummyNode;
+// Pilha auxiliar para construir a árvore sintática
+ast_stack_p treeNodeStack;
 
 /*
  * Argumento: vazio
@@ -103,42 +107,78 @@ void print_stack(){
  * a estrutura do programa parseado utilizando a tabela preditiva LL(1)
  */
 void parse(){
-	allocate_buffer();
 	int nextStep;
+	int errorFlag = FALSE;
 
+	allocate_buffer();
 	init_stack();
+	init_tree_stack();
 	get_next_lexem();
 
 	while(parserStack->symbol != ENDPARSE){
 		switch(parserStack->kind){
-			case TERMINAL:
-			pop_stack();
-			
-			if(!match(currentSymbol, mainLex.token)){
-				printf("Erro ao parsear\n");
-				clear_stack();
-				exit(1);
-			}
-			
-			get_next_lexem();
-			break;
-			case NON_TERMINAL:
-			pop_stack();
-			nextStep = parsingTable[currentSymbol][mainLex.token];
-			
-			if(nextStep == 0){
-                                printf("ERRO SINTATICO: \"%s\" INVALIDO [linha: %d], COLUNA %d.\n", mainLex.word, mainLex.line, mainLex.column);
-				clear_stack();
-				exit(1);
-			}
+			case TERMINAL: {
+				pop_stack();
+				
+				if(!match(currentSymbol, mainLex.token) && errorFlag == FALSE){
+					errorFlag = TRUE;
+					ast_clear_stack();
+					if(dummyNode)
+						free(dummyNode);
+					dummyNode = NULL;
+				}
 
-			handle_stack(nextStep);
-			break;
-			case TREE_BUILDER:
-			pop_stack();
-			
-			break;
+				if(errorFlag == FALSE){
+					if(dummyNode == NULL)
+						dummyNode = ast_create_node();
+
+					set_dummy_data();
+				}
+				
+				get_next_lexem();
+				break;
+			}
+			case NON_TERMINAL: {
+				pop_stack();
+				nextStep = parsingTable[currentSymbol][mainLex.token];
+				
+				if(nextStep == 0){
+					errorFlag = TRUE;
+					printf("ERRO SINTATICO: \"%s\" INVALIDO [linha: %d], COLUNA %d.\n", mainLex.word, mainLex.line, mainLex.column);
+					ast_clear_stack();
+					if(dummyNode)
+						free(dummyNode);
+					dummyNode = NULL;
+				}
+
+				handle_stack(nextStep);
+				break;
+			}
+			case TREE_BUILDER:{
+				pop_stack();
+
+				if(errorFlag == FALSE){
+					build_tree();
+				}
+
+				break;
+			}
 		}
+	}
+
+	if(errorFlag == FALSE){	
+		if(treeNodeStack->next)
+			printf("Erro crítico: pilha auxiliar não contém somente a raiz da árvore.\n");
+		else{
+			syntaxTree = treeNodeStack->top;
+			treeNodeStack = treeNodeStack->next;
+		}
+
+		ast_clear_stack();
+
+		if(dummyNode)
+			free(dummyNode);
+		dummyNode = NULL;
 	}
 
 	clear_stack();
@@ -461,4 +501,368 @@ void handle_stack(int nextStep){
 		case 81:
 		break;
 	}
+}
+
+/*------Construção da árvore sintática------*/
+
+/*
+ * Argumento: vazio
+ * Retorna: vazio
+ * Inicializa as variáveis auxilires de construção
+ * da árvore sintática.
+ */
+void init_tree_stack(){
+	treeNodeStack = NULL;
+	dummyNode = NULL;
+	syntaxTree = NULL;
+}
+
+/*
+ * Argumento: nó da árvore
+ * Retorna: nó nulo da árvore
+ * Libera a memória de todos os elementos da árvore
+ * da qual tree é raiz.
+ */
+ast_p ast_clear_tree(ast_p tree){
+	if(tree == NULL)
+		return NULL;
+	
+	tree->sibling = ast_clear_tree(tree->sibling);
+	for(int i=0; i<AST_MAX_CHILDREN; i++)
+		tree->children[i] = ast_clear_tree(tree->children[i]);
+	
+	free(tree);
+
+	return NULL;
+}
+
+/*
+ * Agumento: vazio
+ * Retorna: vazio
+ * Libera a memória de cada elemento da pilha 
+ * auxiliar;
+ */
+void ast_clear_stack(){
+	ast_stack_p aux;
+	while(treeNodeStack){
+		aux = treeNodeStack;
+		treeNodeStack = treeNodeStack->next;
+		aux->top = ast_clear_tree(aux->top);
+		free(aux);
+	}
+}
+
+/*
+ * Argumento: vazio
+ * Retorna: nó da árvore sintática
+ * Inicializa um nó da árvore para ser preenchido.
+ */
+ast_p ast_create_node(){
+	ast_p new = malloc(sizeof(ast_t));
+
+	new->name = NULL;
+	new->type = -1;
+	new->token = -1;
+	new->typeSpecifier = -1;
+	new->value = -1;
+	new->id[0] = '\0';
+	new->arraySize = -1;
+	new->line = -1;
+	new->column = -1;
+	new->sibling = NULL;
+	for(int i=0; i<AST_MAX_CHILDREN; i++)
+		new->children[i] = NULL;
+	
+	return new;
+}
+
+/* 
+ * Argumento: vazio
+ * Retorna: vazio
+ * Utilizando o símbolo atual no topo da pilha,
+ * preenche o nó dummy para ser inserido na árvore
+ */
+void set_dummy_data(){
+	switch(mainLex.token){
+		case ID:
+			dummyNode->token = mainLex.token;
+			strcpy(dummyNode->id, mainLex.word);
+			dummyNode->line = mainLex.line;
+			dummyNode->column = mainLex.column;
+			break;
+		case NUM:
+			if(dummyNode->id[0]){
+				dummyNode->arraySize = atoi(mainLex.word);
+				break;
+			}
+
+			dummyNode->name = "constant";
+			dummyNode->type = AST_CONST;
+			dummyNode->token = mainLex.token;
+			dummyNode->value = atoi(mainLex.word);
+			dummyNode->line = mainLex.line;
+			dummyNode->column = mainLex.column;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		case PLUS:
+        	case MINUS:
+        	case AST:
+        	case DASH:
+        	case LTHAN:
+        	case GTHAN:
+        	case DIFF:
+		case LEQUAL:
+        	case GEQUAL:
+        	case EQUAL:
+			dummyNode->name = "operand";
+			dummyNode->type = AST_OPERAND;
+			dummyNode->token = mainLex.token;
+			dummyNode->line = mainLex.line;
+			dummyNode->column = mainLex.column;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		case ATT:
+			dummyNode->name = "assignment";
+			dummyNode->type = AST_ASSIGNMENT;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+        	case IF:
+			dummyNode->name = "if-statement";
+			dummyNode->type = AST_IF;
+			dummyNode->token = mainLex.token;
+			dummyNode->line = mainLex.line;
+			dummyNode->column = mainLex.column;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		case INT:
+			dummyNode->typeSpecifier = mainLex.token;
+			break;
+		case VOID:
+			dummyNode->name = "void-param";
+			dummyNode->type = AST_VOID;
+			dummyNode->token = VOID;
+			dummyNode->typeSpecifier = mainLex.token;
+			break;
+		case RETURN:
+			dummyNode->name = "return-statement";
+			dummyNode->type = AST_RETURN;
+			dummyNode->token = mainLex.token;
+			dummyNode->line = mainLex.line;
+			dummyNode->column = mainLex.column;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		case WHILE:
+			dummyNode->name = "while-statement";
+			dummyNode->type = AST_WHILE;
+			dummyNode->token = mainLex.token;
+			dummyNode->line = mainLex.line;
+			dummyNode->column = mainLex.column;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		default:
+		break;
+	}
+}
+
+/* Argumento: nó da árvore
+ * Retorna: vazio
+ * Coloca o nó no topo da pilha auxiliar
+ */
+void ast_push_stack(ast_p node){
+	printf(" \
+	nome: %s, \
+	token: %d, \
+	value: %d, \
+	line: %d, \
+	column: %d, \
+	\n", node->name, node->token, node->value, node->line, node->column);
+	ast_stack_p aux = malloc(sizeof(ast_stack_t));
+
+	aux->top = node;
+	aux->next = treeNodeStack;
+	treeNodeStack = aux;
+}
+
+/*
+ * Argumento: vazio
+ * Retorna: nó da árvore
+ * Retira o nó do topo da pilha auxiliar
+ * e o retorna.
+ */
+ast_p ast_pop_stack(){
+	ast_p node = treeNodeStack->top;
+	ast_stack_p aux = treeNodeStack;
+	treeNodeStack = treeNodeStack->next;
+	free(aux);
+	return node;
+}
+
+/*
+ * Argumento: void
+ * Retorna: void
+ * Com base na ação no topo da pilha de derivação
+ * organiza os nós da árvore sintática na pilha auxiliar
+ */
+void build_tree(void){
+	switch(currentSymbol){
+		case ADD_EXP_CHILD: {
+			ast_p child = ast_pop_stack();
+			ast_p dad = ast_pop_stack();
+			dad->children[EXP_CHILD] = child;
+			ast_push_stack(dad);
+			break;
+		}
+		case ADD_SMT_CHILD: {
+			ast_p child = ast_pop_stack();
+			ast_p dad = ast_pop_stack();
+			dad->children[STMT_CHILD] = child;
+			ast_push_stack(dad);
+			break;
+		}
+		case BUILD_EXP: {
+			ast_p right = ast_pop_stack();
+			ast_p dad = ast_pop_stack();
+			ast_p left = ast_pop_stack();
+
+			dad->children[LEFT_CHILD] = left;
+			dad->children[RIGHT_CHILD] = right;
+			
+			ast_push_stack(dad);
+			break;
+		}
+		case ADD_PARAM_CHILD: {
+			ast_p child = ast_pop_stack();
+			ast_p dad = ast_pop_stack();
+			dad->children[PARAM_CHILD] = child;
+			ast_push_stack(dad);
+			break;
+		}
+		case ADD_SIBLING: {
+			ast_p rightSibling = ast_pop_stack();
+			ast_p leftSibling = ast_pop_stack();
+			leftSibling->sibling = rightSibling;
+			ast_push_stack(leftSibling);
+			break;
+		}
+		case ADD_ELSE_CHILD: {
+			ast_p child = ast_pop_stack();
+			ast_p dad = ast_pop_stack();
+			dad->children[ELSE_CHILD] = child;
+			ast_push_stack(dad);
+			break;
+		}
+		case SET_VAR: {
+			dummyNode->name = "variable";
+			dummyNode->type = AST_VAR;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		}
+		case SET_ARRAY: {
+			dummyNode->name = "array";
+			dummyNode->type = AST_ARRAY;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		}
+		case SET_VAR_PARAM: {
+			dummyNode->name = "var-param";
+			dummyNode->type = AST_VAR_PARAM;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		}
+		case SET_ARRAY_PARAM: {
+			dummyNode->name = "arr-param";
+			dummyNode->type = AST_ARRAY_PARAM;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		}
+		case SET_VAR_DECL: {
+			dummyNode->name = "var-decl";
+			dummyNode->type = AST_VAR_DECL;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		}
+		case SET_ARRAY_DECL: {
+			dummyNode->name = "arr-decl";
+			dummyNode->type = AST_ARRAY_DECL;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		}
+		case SET_FUN_DECL: {
+			dummyNode->name = "fun-decl";
+			dummyNode->type = AST_FUN_DECL;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		}
+		case SET_FUN_CALL: {
+			dummyNode->name = "fun-call";
+			dummyNode->type = AST_FUN;
+			ast_push_stack(dummyNode);
+			dummyNode = NULL;
+			break;
+		}
+	}
+}
+
+/*
+ * Argumento: nó da árvore
+ * Retorna: verdadeiro ou falso
+ * Dado um nó retorna veradeiro se ele tiver filhos
+ * ou falso caso não tenha nenhum filho.*/
+int hasChildren(ast_p node){
+	for(int i=0; i<AST_MAX_CHILDREN; i++)
+		if(node->children[i])
+			return TRUE;
+	return FALSE;
+}
+
+/*
+ * Argumento: raiz da árvore e profundidade
+ * Retorna:vazio
+ * Exibe os nós da árvore sintáica construída
+ * utilizando a profundidade para identar durante a exibição
+ */
+void print_ast(ast_p root, int depth){
+	if(root == NULL)
+		return;
+
+	if(depth > 3)
+		depth = 3;
+	
+	for(int i=1; i<depth; i++)
+		printf("\t");
+	
+	printf("<%s>", root->name);
+
+	if(hasChildren(root))
+		printf("(");
+	
+	if(depth < 3)
+		printf("\n");
+	
+	for(int i=0; i<AST_MAX_CHILDREN; i++)
+		print_ast(root->children[i], depth+1);
+	
+	if(hasChildren(root))
+		printf(")\n");
+
+	if(root->sibling)
+		printf(", ");
+	
+	if(depth < 3)
+		printf("\n");
+	
+	print_ast(root->sibling, depth);
 }

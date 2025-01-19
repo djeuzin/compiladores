@@ -27,4 +27,7 @@ int lexOnly = FALSE;
 // Arquivo fonte que será analisado
 FILE* sourceFile;
 
+// Raiz da árvore de análise sintática
+ast_p syntaxTree;
+
 #endif
