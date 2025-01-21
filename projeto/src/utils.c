@@ -7,37 +7,73 @@
 
 #include "utils.h"
 
-void blue_text() { printf("\033[0;34m"); }
-void default_color_text() { printf("\033[0m"); }
+/*
+ * Argumento: string
+ * Retorna: vazio
+ * Exibe a string passada na cor azul.
+ */
+void print_b(char* str) { 
+        printf("\033[0;34m"); 
+        printf("%s", str);
+        printf("\033[0m");
+}
+
+/*
+ * Argumento: string
+ * Retorna: vazio
+ * Exibe a string passada na cor vermelha.
+ */
+void print_r(char* str) { 
+        printf("\033[0;31m");
+        printf("%s", str);
+        printf("\033[0m");
+}
+
+/*
+ * Argumento: vazio
+ * Retorna: vazio
+ * Configura para que os próximos caracteres exibidos
+ * sejam exibidos na cor vermelha.
+ */
 void red_text() { printf("\033[0;31m"); }
 
+/*
+ * Argumento: vazio
+ * Retorna: vazio
+ * Configura para que os próximos caracteres exibidos
+ * sejam exibidos na cor padrão.
+ */
+void default_color_text() { printf("\033[0m"); }
+
+/*
+ * Argumento: vazio
+ * Retorna: vazio
+ * Exibe as opções do programa.
+ */
 void display_help(){
         printf("Cross C- compiler\nOpcoes:\n");
         
-        blue_text();
-        printf("--help");
-        default_color_text();
+        print_b("--help");
         printf("\t\tExibe opcoes.\n");
 
-        blue_text();
-        printf("-l, -L");
-        default_color_text();
+        print_b("-l, -L");
         printf("\t\tExibe os lexemas classificados.\n");
 
-        blue_text();
-        printf("-p, -P");
-        default_color_text();
+        print_b("-p, -P");
         printf("\t\tExibe a arvore abstrata gerada pelo parser.\n");
 
-        blue_text();
-        printf("-o, -O");
-        default_color_text();
+        print_b("-o, -O");
         printf("\t\tRealiza apenas a analise lexica.\n");
 
         exit(0);
 }
 
-// Abre o arquivo e seta a flag de debug
+/*
+ * Argumento: contador de argumentos e array de argumentos
+ * Retorna: vazio
+ * Abre o arquivo fonte e seta as flags solicitadas.
+ * Em caso de erro, exibe uma mensagem apropriada.
+ */
 void open_source_file(int argc, char* argv[]){
         if(argc < 2){
                 red_text();
@@ -114,12 +150,21 @@ void open_source_file(int argc, char* argv[]){
         }
 }
 
-// Fecha o arquivo fonte
+/*
+ * Argumento: vazio
+ * Retorna: vazio
+ * Fecha o arquivo fonte.
+ */
 void close_source_file(){
         fclose(sourceFile);
 }
 
-// Printa o lexema
+/*
+ * Argumento: vazio
+ * Retorna: vazio
+ * Função auxiliar do lexer para exibir os lexemas
+ * classificados quando a flag for acionada.
+ */
 void print_lexem(){
         switch(mainLex.token){
                 case ELSE:
@@ -207,4 +252,59 @@ void print_lexem(){
                 printf("<ERR> \"%s\" [linha: %d]\n", mainLex.word, mainLex.line);
                 break;
         }
-}     
+}
+
+/*
+ * Argumento: nó da árvore
+ * Retorna: verdadeiro ou falso
+ * Dado um nó retorna veradeiro se ele tiver filhos
+ * ou falso caso não tenha nenhum filho.
+ */
+int hasChildren(ast_p node){
+	for(int i=0; i<AST_MAX_CHILDREN; i++)
+		if(node->children[i])
+			return TRUE;
+	return FALSE;
+}
+
+/*
+ * Argumento: raiz da árvore e profundidade
+ * Retorna:vazio
+ * Exibe os nós da árvore sintáica construída
+ * utilizando a profundidade para identar durante a exibição
+ */
+void print_ast(ast_p root, int depth){
+	if(root == NULL)
+		return;
+
+	for(int i=1; i<depth; i++)
+		printf("    ");
+	
+	print_b("<");
+	printf("%s", root->name);
+
+	if(root->id[0] != '\0')
+		printf(" (%s)", root->id);
+	
+	print_b(">");
+
+	if(hasChildren(root))
+		print_r("(\n");
+	
+	for(int i=0; i<AST_MAX_CHILDREN; i++){
+		print_ast(root->children[i], depth+1);
+	}
+	
+	if(hasChildren(root)){
+		for(int i=1; i<depth; i++)
+			printf("    ");
+		print_r(")");
+	}
+	
+	if(root->sibling)
+		printf(",");
+	
+	printf("\n");
+
+	print_ast(root->sibling, depth);
+}

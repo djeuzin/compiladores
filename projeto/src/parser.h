@@ -15,6 +15,7 @@
 #include <string.h>
 #include "types.h"
 #include "parsing_table.h"
+#include "utils.h"
 
 /* Variáveis externas utilizadas */
 
@@ -80,11 +81,5 @@ ast_p ast_pop_stack(void);
 
 // Constrói a árvore sintática
 void build_tree(void);
-
-// Checa se um nó possui filhos
-int hasChildren(ast_p);
-
-// Exibe a árvore sintática construída
-void print_ast(ast_p, int);
 
 #endif
