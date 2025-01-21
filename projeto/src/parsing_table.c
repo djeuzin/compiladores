@@ -109,7 +109,7 @@ expression_ 		-> ( <SET_FUN_CALL> <ADD_SIBLING_STOPPER> args ) <ADD_SIBLING> <AD
 expression__		-> = expression <ADD_EXP_CHILD>
 expression__ 		-> term_ add-expression_ simple-expression_
 var 			-> ID var_
-var_ 			-> [ <SET_ARRAY> expression ] <ADD_EXP_CHILD>
+var_ 			-> [ <SET_ARRAY> expression ] <ADD_INDEX_CHILD>
 var_ 			-> <SET_VAR>
 simple-expression_	-> relop additive-expression <BUILD_EXP>
 simple-expression_ 	-> 

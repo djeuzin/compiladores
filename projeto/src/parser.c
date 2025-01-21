@@ -424,7 +424,7 @@ void handle_stack(int nextStep){
 		push_stack(ID, TERMINAL);
 		break;
 		case 52:
-		push_stack(ADD_EXP_CHILD, TREE_BUILDER);
+		push_stack(ADD_ARRAY_INDEX, TREE_BUILDER);
 		push_stack(CL_BRA, TERMINAL);
 		push_stack(EXPRESSION, NON_TERMINAL);
 		push_stack(SET_ARRAY, TREE_BUILDER);
@@ -633,6 +633,7 @@ void set_dummy_data(){
 			dummyNode->name = "constant";
 			dummyNode->type = AST_CONST;
 			dummyNode->token = mainLex.token;
+			strcpy(dummyNode->id, mainLex.word);
 			dummyNode->value = atoi(mainLex.word);
 			dummyNode->line = mainLex.line;
 			dummyNode->column = mainLex.column;
@@ -652,6 +653,7 @@ void set_dummy_data(){
 			dummyNode->name = "operand";
 			dummyNode->type = AST_OPERAND;
 			dummyNode->token = mainLex.token;
+			strcpy(dummyNode->id, mainLex.word);
 			dummyNode->line = mainLex.line;
 			dummyNode->column = mainLex.column;
 			ast_push_stack(dummyNode);
@@ -660,8 +662,6 @@ void set_dummy_data(){
 		case ATT:
 			treeNodeStack->top->name = "assignment";
 			treeNodeStack->top->type = AST_ASSIGNMENT;
-			ast_push_stack(dummyNode);
-			dummyNode = NULL;
 			break;
         	case IF:
 			dummyNode->name = "if-statement";
@@ -867,6 +867,14 @@ void build_tree(void){
 			auxNode->name = "sibling-stopper";
 			auxNode->type = AST_SIBLING_STOPPER;
 			ast_push_stack(auxNode);
+			break;
+		}
+		case ADD_ARRAY_INDEX: {
+			ast_p child = ast_pop_stack();
+			ast_p dad = ast_pop_stack();
+			dad->children[INDEX_CHILD] = child;
+			ast_push_stack(dad);
+			break;
 		}
 	}
 }
@@ -897,7 +905,12 @@ void print_ast(ast_p root, int depth){
 	for(int i=1; i<depth; i++)
 		printf("    ");
 	
-	printf("<%s>", root->name);
+	printf("<%s", root->name);
+
+	if(root->id[0] != '\0')
+		printf(" (%s)", root->id);
+	
+	printf(">");
 
 	if(hasChildren(root))
 		printf("(\n");

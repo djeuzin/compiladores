@@ -25,6 +25,7 @@
 #define PARAM_CHILD 0
 #define EXP_CHILD 0
 #define STMT_CHILD 1
+#define INDEX_CHILD 1
 #define LEFT_CHILD 0
 #define RIGHT_CHILD 1
 #define ELSE_CHILD 2
@@ -174,7 +175,8 @@ typedef enum{
 	SET_FUN_DECL,
 	SET_FUN_CALL,
 	SET_VOID_PARAM,
-	ADD_SIBLING_STOPPER
+	ADD_SIBLING_STOPPER,
+	ADD_ARRAY_INDEX
 } ast_action_t;
 
 // Nó da pilha principal de derivação
