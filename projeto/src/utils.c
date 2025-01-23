@@ -302,7 +302,7 @@ void print_ast(ast_p root, int depth){
 	}
 	
 	if(root->sibling)
-		printf(",");
+		print_b(",");
 	
 	printf("\n");
 
