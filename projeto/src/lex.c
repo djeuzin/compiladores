@@ -120,8 +120,10 @@ void get_next_lexem(){
                                 mainLex.word[mainLex.size] = c;
                                 mainLex.size++; 
                         }
-                        else
+                        else{
+                                mainLex.token = ENDFILE;
                                 mainLex.size = 0;
+                        }
                 }
 
                 if(acceptingTable[state]){

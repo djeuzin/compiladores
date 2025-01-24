@@ -126,6 +126,10 @@ void parse(){
 					if(dummyNode)
 						free(dummyNode);
 					dummyNode = NULL;
+					clear_stack();
+					deallocate_buffer();
+					close_source_file();
+					exit(1);
 				}
 
 				if(errorFlag == FALSE){
@@ -149,6 +153,10 @@ void parse(){
 					if(dummyNode)
 						free(dummyNode);
 					dummyNode = NULL;
+					clear_stack();
+					deallocate_buffer();
+					close_source_file();
+					exit(1);
 				}
 
 				handle_stack(nextStep);
