@@ -46,5 +46,5 @@ int usedTable[][20] = {
 
 // Retorna se o estado é um que deve ser ignorado pelo lexer
 int is_ignored_state(int state){
-        return (state != 6 && state != 7 && state != 0);
+        return (state == 6 || state == 7 || state == 0);
 }

@@ -109,7 +109,7 @@ void get_next_lexem(){
                 // Se o caractere foi utilizado e o DFA não está em um estado que deve
                 // ser ignorado, adicionamos o caractere à palavra do lexema.
                 if(mainBuffer.used){
-                        if(is_ignored_state(state)){
+                        if(!is_ignored_state(state)){
                                 if(mainLex.size == 0){
                                         mainLex.line = mainBuffer.line;
                                         mainLex.column = mainBuffer.column;
