@@ -29,7 +29,7 @@ int deltaTable[][20] = {
 };
 
 // Tabela que indica quais estados do DFA do analisador léxico são de aceitação
-int acceptingTable[] = {0, 0, 0, 0, 0, 0, 0, 1};
+int acceptingTable[] = {0, 0, 0, 0, 0, 0, 0, 0, 1};
 
 // Tabela que indica, para cada transição do DFA, se o caractere é consumido (1) ou não (0)
 int usedTable[][20] = {

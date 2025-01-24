@@ -108,14 +108,20 @@ void get_next_lexem(){
         
                 // Se o caractere foi utilizado e o DFA não está em um estado que deve
                 // ser ignorado, adicionamos o caractere à palavra do lexema.
-                if(mainBuffer.used && is_ignored_state(state)){
-                        if(mainLex.size == 0){
-                                mainLex.line = mainBuffer.line;
-                                mainLex.column = mainBuffer.column;
-                                mainLex.token = cTableIndex;
+                if(mainBuffer.used){
+                        if(is_ignored_state(state)){
+                                if(mainLex.size == 0){
+                                        mainLex.line = mainBuffer.line;
+                                        mainLex.column = mainBuffer.column;
+                                        mainLex.token = cTableIndex;
+                                }
+                                if(state == 2)
+                                        mainLex.token = ERR;
+                                mainLex.word[mainLex.size] = c;
+                                mainLex.size++; 
                         }
-                        mainLex.word[mainLex.size] = c;
-                        mainLex.size++; 
+                        else
+                                mainLex.size = 0;
                 }
 
                 if(acceptingTable[state]){
