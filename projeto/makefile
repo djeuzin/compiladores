@@ -10,7 +10,7 @@ CFLAGS=-Wall -Wextra -g $(foreach D,$(INCDIRS),-I$(D)) $(DEPFLAGS)
 all: $(PROGRAM)
 
 $(PROGRAM): $(OFILES)
-	$(CC) -o $@ $^
+	$(CC) -o $@ $^ -lm
 
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
