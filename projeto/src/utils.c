@@ -120,6 +120,10 @@ void open_source_file(int argc, char* argv[]){
                                 case 'O':
                                 lexOnly = TRUE;
                                 break;
+                                case 's':
+                                case 'S':
+                                semanticFlag = TRUE;
+                                break;
                                 default:
                                 red_text();
                                 fprintf(stderr, "ERRO: Comando %s invalido.\n", argv[i]);
@@ -307,4 +311,16 @@ void print_ast(ast_p root, int depth){
 	printf("\n");
 
 	print_ast(root->sibling, depth);
+}
+
+/*
+ * Argumento: vazio
+ * Retorna: vazio
+ * Imprime a tabela de símbolos construída
+ */
+void print_symbol_table(){
+        printf("# TABELA DE SIMBOLOS\n");
+        printf("Nome_ID;Escopo;Tipo_ID;Tipo_dado;Linhas\n");
+
+        for(int i = 0; i<SYMBOL_TABLE_SIZE; i++);
 }

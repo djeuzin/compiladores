@@ -24,6 +24,9 @@ int parserFlag = FALSE;
 // Realiza apenas a análise léxica do arquivo fonte se for TRUE
 int lexOnly = FALSE;
 
+// Exibe a tabela de símbolos se for TRUE
+int semanticFlag = FALSE;
+
 // Arquivo fonte que será analisado
 FILE* sourceFile;
 

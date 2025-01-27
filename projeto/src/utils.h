@@ -15,6 +15,7 @@
 extern int lexFlag;
 extern int parserFlag;
 extern int lexOnly;
+extern int semanticFlag;
 
 extern lex_t mainLex;
 extern FILE* sourceFile;
@@ -40,5 +41,8 @@ int hasChildren(ast_p);
 
 // Exibe a árvore sintática construída
 void print_ast(ast_p, int);
+
+// Exibe a tabela de símbolos
+void print_symbol_table();
 
 #endif
