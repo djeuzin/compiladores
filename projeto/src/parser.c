@@ -174,6 +174,8 @@ void parse(){
 	}
 
 	if(errorFlag == FALSE){	
+		if(mainLex.token != ENDFILE)
+			printf("ERRO GRAVE.\n");
 		syntaxTree = ast_pop_stack();
 
 		if(parserFlag)
