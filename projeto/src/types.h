@@ -212,4 +212,20 @@ struct astStack{
 typedef struct astStack ast_stack_t;
 typedef ast_stack_t* ast_stack_p;
 
+/* Definições para análise semântica */
+#define SYMBOL_TABLE_SIZE 211
+#define ALPHA 2
+
+// Definição do nó da tabela de símbolos
+struct symbolTable{
+        int declaration;
+        char* id;
+        char* scope;
+        char* type;
+        char* dataType;
+        int line;
+        struct symbolTable* next;
+};
+typedef struct symbolTable* table_p;
+
 #endif
