@@ -13,6 +13,7 @@
 #include "globals.h"
 #include "lex.h"
 #include "parser.h"
+#include "semantic.h"
 #include "utils.h"
 
 #define TESTE
@@ -30,6 +31,7 @@ int main(int argc, char* argv[]){
 	}
 	else{
 		parse();
+		semantic_analysis();
 	}
 	
 	close_source_file();

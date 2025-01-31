@@ -186,8 +186,6 @@ void parse(){
 		if(dummyNode)
 			free(dummyNode);
 		dummyNode = NULL;
-
-		syntaxTree = ast_clear_tree(syntaxTree);
 	}
 
 	clear_stack();

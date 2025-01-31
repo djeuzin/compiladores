@@ -7,6 +7,8 @@
 /******************************/
 
 #include "semantic.h"
+#include "types.h"
+#include <stdio.h>
 
 // Tabela de símbolos
 table_p symbol_table[SYMBOL_TABLE_SIZE];
@@ -20,16 +22,21 @@ table_p symbol_table[SYMBOL_TABLE_SIZE];
  */
 void semantic_analysis(void){
         ast_p nodePtr = syntaxTree;
+
+        // Escopo inicial para variáveis
         char* currentScope = "global";
 
         init_symbol_table();
 
-        recursive_analysis(nodePtr, currentScope);
+        // Percorre a árvore analisando cada nó
+        recursive_analysis(nodePtr, currentScope, INITIAL_DEPTH);
 
         if(semanticFlag)
                 print_symbol_table();
         
         clear_symbol_table();
+
+        syntaxTree = ast_clear_tree(syntaxTree);
 }
 
 /* 
@@ -71,12 +78,12 @@ table_p clear_list(table_p unit){
 }
 
 /*
- * Argumento: nó da árvore sintática e escopo atual
+ * Argumento: nó da árvore sintática, escopo atual e profundiade atual
  * Retorna: vazio
  * Recursivamente, analisa a árvore sintática
  * preenchendo a tabela de símbolos no processo
  */
-void recursive_analysis(ast_p node, char* scope){
+void recursive_analysis(ast_p node, char* scope, int depth){
         if(node == NULL)
                 return;
 
@@ -89,9 +96,12 @@ void recursive_analysis(ast_p node, char* scope){
         fill_table(node, scope);
 
         for(int i=0; i<AST_MAX_CHILDREN; i++)
-                recursive_analysis(node->children[i], dadScope);
+                recursive_analysis(node->children[i], dadScope, depth+1);
         
-        recursive_analysis(node->sibling, scope);
+        if(node->sibling)
+                recursive_analysis(node->sibling, scope, depth);
+        else if(depth == INITIAL_DEPTH)
+                check_main_function(node);
 }
 
 /*
@@ -121,44 +131,16 @@ void fill_table(ast_p node, char* scope){
                 case AST_ARRAY_PARAM: 
                 case AST_ARRAY_DECL: 
                 case AST_VAR_PARAM: 
-	        case AST_VAR_DECL: 
-	        case AST_FUN_DECL: {
-                        table_p entry = create_table_entry();
-                        entry->declaration = TRUE;
-                        entry->id = node->id;
-                        entry->line = node->line;
-                        entry->scope = scope;
-                        if(node->typeSpecifier == INT)
-                                entry->type = "int";
-                        else
-                                entry->type = "void";
-                        entry->dataType = "array";
-                        char* keyHash = NULL;
-                        strcpy(keyHash, scope);
-                        strcat(keyHash, entry->id);
-                        insert_symbol_table(entry, semantic_hash(keyHash));
+	        case AST_VAR_DECL: {
+                        if(node->typeSpecifier != INT)
+                                printf("ERRO SEMANTICO: variavel sendo declarada como tipo void. LINHA: %d\n", node->line);
                         break;
-                }
-                case AST_ARRAY: 
+                } 
+                case AST_ARRAY:
+	        case AST_FUN_DECL:
                 case AST_VAR: 
 	        case AST_FUN:
-                case AST_ASSIGNMENT: {
-                        table_p entry = create_table_entry();
-                        entry->declaration = FALSE;
-                        entry->id = node->id;
-                        entry->line = node->line;
-                        entry->scope = scope;
-                        if(node->typeSpecifier == INT)
-                                entry->type = "int";
-                        else
-                                entry->type = "void";
-                        entry->dataType = "array";
-                        char* keyHash = NULL;
-                        strcpy(keyHash, scope);
-                        strcat(keyHash, entry->id);
-                        insert_symbol_table(entry, semantic_hash(keyHash));
-                        break;
-                }
+                case AST_ASSIGNMENT:
                 default:
                 break;
         }
@@ -197,13 +179,6 @@ table_p insert_table_entry(table_p listHead, table_p entry){
         table_p aux = listHead;
 
         while(aux->next){
-                if (!strcmp(aux->id, entry->id)){
-                        if(aux->declaration){
-                                if (entry->declaration){
-                                        printf("Erro semantic\n");
-                                }
-                        }
-                }
                 aux = aux->next;
         }
         
@@ -219,4 +194,34 @@ table_p insert_table_entry(table_p listHead, table_p entry){
  */
 void insert_symbol_table(table_p entry, int index){
         symbol_table[index] = insert_table_entry(symbol_table[index], entry);
+}
+
+/*
+ * Argumento: nó raiz
+ * Retorna: vazio
+ * Checa se a última declaração do programa
+ * é da função void main(void).
+ */
+void check_main_function(ast_p root){
+        if(strcmp(root->id, "main") || root->type != AST_FUN_DECL){
+                printf("ERRO SEMANTICO: ultima declaracao dever ser da funcao main. Ultima declaracao foi \"%s\". LINHA: %d.\n", root->id, root->line);
+                return;
+        }
+
+        if(root->children[PARAM_CHILD]->type != AST_VOID){
+                printf("ERRO SEMANTICO: funcao main deve ser definida com parametro void. LINHA: %d\n", root->line);
+                return;
+        }
+
+        if(root->typeSpecifier != VOID){
+                printf("ERRO SEMANTICO: funcao main deve ser definida como void. LINHA: %d\n", root->line);
+                return;
+        }
+
+        root = root->children[STMT_CHILD];
+        while(root->sibling)
+                root = root->sibling;
+
+        if(root->type == AST_RETURN)
+                printf("ERRO SEMANTICO: funcao main nao utiliza controle de fluxo return. LINHA: %d\n", root->line);
 }

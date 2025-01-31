@@ -14,6 +14,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
+#include "parser.h"
 #include "types.h"
 
 extern ast_p syntaxTree;
@@ -21,6 +22,7 @@ extern int semanticFlag;
 extern table_p symbol_table[SYMBOL_TABLE_SIZE];
 
 extern void print_symbol_table();
+extern ast_p ast_clear_tree(ast_p);
 
 // Constrói a tabela de símbolos e analisa na segunda passada
 void semantic_analysis(void);
@@ -35,7 +37,7 @@ void clear_symbol_table(void);
 table_p clear_list(table_p);
 
 // Analiza a árvore sintática recursivamente
-void recursive_analysis(ast_p, char*);
+void recursive_analysis(ast_p, char*, int);
 
 // Função hash para preencher a tabela de símbolos
 int semantic_hash(char*);
@@ -51,5 +53,8 @@ table_p insert_table_entry(table_p, table_p);
 
 // Insere uma entrada na tabela no índice apropriado
 void insert_symbol_table(table_p, int);
+
+// Checa se a última função é main
+void check_main_function(ast_p);
 
 #endif

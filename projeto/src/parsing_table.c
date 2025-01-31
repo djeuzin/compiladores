@@ -64,7 +64,7 @@ declaration-list_ 	-> declaration declaration-list_
 declaration-list_ 	-> 
 declaration 		-> type-specifier ID declaration_
 declaration_ 		-> var-declaration_ 
-declaration_ 		-> ( <SET_FUN_DECL> <ADD_SIBLING_STOPPER params ) <ADD_SIBLING> <ADD_PARAM_CHILD> compound-stmt <ADD_STMT_CHILD>
+declaration_ 		-> ( <SET_FUN_DECL> <ADD_SIBLING_STOPPER> params ) <ADD_SIBLING> <ADD_PARAM_CHILD> compound-stmt <ADD_STMT_CHILD>
 var-declaration 	-> type-specifier ID var-declaration_
 var-declaration_ 	-> ; <SET_VAR_DECL>
 var-declaration_ 	-> [ NUM <SET_ARRAY_DECL> ] ;
