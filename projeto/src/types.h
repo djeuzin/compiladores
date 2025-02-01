@@ -223,16 +223,19 @@ typedef ast_stack_t* ast_stack_p;
 
 // Definição do nó da tabela de símbolos
 struct symbolTable{
-        int declaration;
+	// Variáveis para exibição
         char* id;
         char* scope;
         char* type;
         char* dataType;
+        // Variáveis para implementar a lógica da tabela
         int numberOfParams;
         int params[NUMBER_OF_REFERENCES];
         int paramsIndex;
         int lines[NUMBER_OF_REFERENCES];
         int linesIndex;
+        int typeSpecifier;
+        int objectType;
         struct symbolTable* next;
 };
 typedef struct symbolTable* table_p;
