@@ -60,4 +60,10 @@ void check_main_function(ast_p);
 // Procura uma entrada na tabela associada a um nó
 table_p search_table_entry(ast_p, char*);
 
+// Checa se uma atribuição está consistente
+void check_assignment(ast_p);
+
+// Checa consistência de uma variável
+void check_variable_consistency(ast_p, char*);
+
 #endif

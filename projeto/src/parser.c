@@ -612,6 +612,7 @@ ast_p ast_create_node(){
 	new->line = -1;
 	new->column = -1;
 	new->sibling = NULL;
+	new->visited = FALSE;
 	for(int i=0; i<AST_MAX_CHILDREN; i++)
 		new->children[i] = NULL;
 	

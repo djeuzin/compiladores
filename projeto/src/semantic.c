@@ -10,6 +10,7 @@
 #include "parser.h"
 #include "types.h"
 #include <stdio.h>
+#include <string.h>
 
 // Tabela de símbolos
 table_p symbol_table[SYMBOL_TABLE_SIZE];
@@ -119,7 +120,8 @@ void recursive_analysis(ast_p node, char* scope, int depth){
         if(node->type == AST_FUN_DECL)
                 dadScope = node->id;
 
-        fill_table(node, scope);
+        if(node->visited == FALSE)
+                fill_table(node, scope);
 
         for(int i=0; i<AST_MAX_CHILDREN; i++)
                 recursive_analysis(node->children[i], dadScope, depth+1);
@@ -164,6 +166,7 @@ void fill_table(ast_p node, char* scope){
                                 printf("ERRO SEMANTICO: variavel %s sendo declarada como tipo void. LINHA: %d\n", node->id, node->line);
 
                         auxEntry = search_table_entry(node, scope);
+                        node->visited = TRUE;
 
                         if(auxEntry == NULL){
                                 char hashKey[ID_LENGTH];
@@ -208,22 +211,10 @@ void fill_table(ast_p node, char* scope){
                 case AST_ARRAY:
                 case AST_ASSIGNMENT:
                 case AST_VAR: {
-                        table_p auxEntry;
+                        check_variable_consistency(node, scope);
 
-                        auxEntry = search_table_entry(node, scope);
-
-                        if(auxEntry == NULL){
-                                printf("ERRO SEMANTICO: variavel %s nao delcarada antes do uso. LINHA: %d.\n", node->id, node->line);
-                                break;
-                        }
-
-                        if(auxEntry->objectType == AST_FUN){
-                                printf("ERRO SEMANTICO: identificardor utilizado na declaracao de funcao %s. LINHA: %d.\n", node->id, node->line);
-                                break;
-                        }
-
-                        auxEntry->lines[auxEntry->linesIndex] = node->line;
-                        (auxEntry->linesIndex)++;
+                        // if(node->type == AST_ASSIGNMENT)
+                        //         check_assignment(node->children[EXP_CHILD]);
 
                         break;
                 }
@@ -253,6 +244,8 @@ void fill_table(ast_p node, char* scope){
                         (newEntry->linesIndex)++;
 
                         while(auxCrawlingNode){
+                                if(auxCrawlingNode->type == AST_VOID)
+                                        break;
                                 newEntry->params[newEntry->paramsIndex] = auxCrawlingNode->type;
                                 (newEntry->paramsIndex)++;
                                 auxCrawlingNode = auxCrawlingNode->sibling;
@@ -462,4 +455,49 @@ table_p search_table_entry(ast_p node, char* scope){
         }
 
         return NULL;
+}
+
+/*
+ * Argumento: nó raiz da expressão
+ * Retorna: vazio
+ * Checa se os valores da expressão
+ * são válidos na atribuição de valores.
+ */
+void check_assignment(ast_p expRoot){
+        if(expRoot == NULL)
+                return;
+
+        switch(expRoot->type){
+                case AST_ARRAY:{
+                }
+                default:
+                        break;
+        }
+
+        expRoot->visited = TRUE;
+}
+
+/* 
+ * Argumentos: nó da árvore e escopo do nó
+ * Retorna: vazio
+ * Checa a consitência da variável, se foi declarada antes
+ * do uso ou se o identificador é o mesmo que de uma função
+ */ 
+void check_variable_consistency(ast_p node, char* scope){
+        table_p auxEntry;
+
+        auxEntry = search_table_entry(node, scope);
+
+        if(auxEntry == NULL){
+                printf("ERRO SEMANTICO: variavel %s nao delcarada antes do uso. LINHA: %d.\n", node->id, node->line);
+                return;
+        }
+
+        if(auxEntry->objectType == AST_FUN){
+                printf("ERRO SEMANTICO: identificardor utilizado na declaracao de funcao %s. LINHA: %d.\n", node->id, node->line);
+                return;
+        }
+
+        auxEntry->lines[auxEntry->linesIndex] = node->line;
+        (auxEntry->linesIndex)++;
 }

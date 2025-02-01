@@ -202,6 +202,7 @@ struct astNode{
 	int arraySize;
 	int line;
 	int column;
+	int visited;
 	struct astNode* sibling;
 	struct astNode* children[AST_MAX_CHILDREN];
 };

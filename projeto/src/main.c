@@ -16,8 +16,6 @@
 #include "semantic.h"
 #include "utils.h"
 
-#define TESTE
-
 int main(int argc, char* argv[]){
 	open_source_file(argc, argv);
 
