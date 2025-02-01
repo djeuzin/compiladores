@@ -9,6 +9,7 @@
 #include "semantic.h"
 #include "parser.h"
 #include "types.h"
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -160,164 +161,38 @@ void fill_table(ast_p node, char* scope){
                 case AST_ARRAY_PARAM:
                 case AST_VAR_PARAM: 
                 case AST_VAR_DECL: {
-                        table_p auxEntry;
-
-                        if(node->typeSpecifier != INT)
-                                printf("ERRO SEMANTICO: variavel %s sendo declarada como tipo void. LINHA: %d\n", node->id, node->line);
-
-                        auxEntry = search_table_entry(node, scope);
-                        node->visited = TRUE;
-
-                        if(auxEntry == NULL){
-                                char hashKey[ID_LENGTH];
-                                strcpy(hashKey, scope);
-                                strcat(hashKey, node->id);
-                                int entryHash = semantic_hash(hashKey);
-                                table_p newEntry = create_table_entry();
-
-                                if(node->type == AST_ARRAY_DECL || node->type == AST_ARRAY_PARAM){
-                                        newEntry->dataType = "array";
-                                        newEntry->objectType = AST_ARRAY;
-                                }
-                                else{
-                                        newEntry->dataType = "variable";
-                                        newEntry->objectType = AST_VAR;
-                                }
-                                newEntry->type = "int";
-                                newEntry->typeSpecifier = INT;
-                                newEntry->id = node->id;
-                                newEntry->scope = scope;
-                                newEntry->lines[newEntry->linesIndex] = node->line;
-                                (newEntry->linesIndex)++;
-
-                                insert_symbol_table(newEntry, entryHash);
-
-                                break;
-                        }
-
-                        if(auxEntry->objectType == AST_FUN){
-                                printf("ERRO SEMANTICO: identificardor utilizado na declaracao de funcao %s. LINHA: %d.\n", node->id, node->line);
-                                break;
-                        }
-                        
-
-                        if(!strcmp(auxEntry->scope, scope)){
-                                printf("ERRO SEMANTICO: variavel %s ja declarada nesse escopo. LINHA: %d.\n", node->id, node->line);
-                                break;
-                        }
+                        check_variable_unity(node, scope);
 
                         break;
                 } 
                 case AST_ARRAY:
-                case AST_ASSIGNMENT:
                 case AST_VAR: {
-                        check_variable_consistency(node, scope);
+                        if(node->visited == FALSE)
+                                check_variable_consistency(node, scope);
 
-                        // if(node->type == AST_ASSIGNMENT)
-                        //         check_assignment(node->children[EXP_CHILD]);
+                        break;
+                }
+                case AST_ASSIGNMENT: {
+                        if(node->visited == FALSE){
+                                table_p auxEntry = search_table_entry(node, scope);
+                                check_variable_consistency(node, scope);
+                                
+                                if(node->children[INDEX_CHILD] == NULL && auxEntry->objectType == AST_ARRAY)
+                                        printf("ERRO SEMANTICO: variavel %s do tipo arrary deve ser indexado em uma atribuicao. LINHA: %d.\n", node->id, node->line);
+
+                                check_assignment(node->children[EXP_CHILD], scope);
+                        }
 
                         break;
                 }
                 case AST_FUN_DECL: {
-                        ast_p auxCrawlingNode = node->children[PARAM_CHILD];
-                        table_p auxEntry = search_table_entry(node, NULL);
-
-                        if(auxEntry != NULL){
-                                printf("ERRO SEMANTICO: identificardor %s ja declarado. LINHA: %d.\n", node->id, node->line);
-                                break;
-                        }
-
-                        table_p newEntry = create_table_entry();
-                        newEntry->dataType = "function";
-                        newEntry->objectType = AST_FUN;
-                        if(node->typeSpecifier == INT){
-                                newEntry->type = "int";
-                                newEntry->typeSpecifier = INT;
-                        }
-                        else{
-                                newEntry->type = "void";
-                                newEntry->typeSpecifier = VOID;
-                        }
-                        newEntry->id = node->id;
-                        newEntry->scope = scope;
-                        newEntry->lines[newEntry->linesIndex] = node->line;
-                        (newEntry->linesIndex)++;
-
-                        while(auxCrawlingNode){
-                                if(auxCrawlingNode->type == AST_VOID)
-                                        break;
-                                newEntry->params[newEntry->paramsIndex] = auxCrawlingNode->type;
-                                (newEntry->paramsIndex)++;
-                                auxCrawlingNode = auxCrawlingNode->sibling;
-                        }
-
-                        insert_symbol_table(newEntry, semantic_hash(node->id));
+                        check_function_declaration(node, scope);
 
                         break;
                 }
 	        case AST_FUN: {
-                        table_p auxEntry = search_table_entry(node, NULL);
-                        ast_p auxCrawlingNode;
-
-                        if(auxEntry == NULL){
-                                printf("ERRO SEMANTICO: funcao %s nao delcarada antes do uso. LINHA: %d.\n", node->id, node->line);
-                                break;
-                        }
-
-                        auxCrawlingNode = node->children[PARAM_CHILD];
-
-                        for(int i=0; i < auxEntry->paramsIndex; i++){
-                                if(auxCrawlingNode->type == AST_CONST || 
-                                   auxCrawlingNode->type == AST_OPERAND)
-                                        if(auxEntry->params[i] != AST_VAR_PARAM)
-                                                break;
-
-                                if(auxCrawlingNode->type == AST_FUN){
-                                        table_p otherEntry = search_table_entry(auxCrawlingNode, NULL);
-
-                                        if(otherEntry == NULL ||
-                                           otherEntry->typeSpecifier != INT ||
-                                           auxEntry->params[i] != AST_VAR_PARAM)
-                                                break;
-                                }
-
-                                if(auxCrawlingNode->type == AST_ARRAY){
-                                        // Se tem referência, temos um inteiro
-                                        if(auxCrawlingNode->children[INDEX_CHILD]){
-                                                if(auxEntry->params[i] != AST_VAR_PARAM)
-                                                        break;
-                                        }
-                                        else{
-                                                if(auxEntry->params[i] != AST_ARRAY_PARAM)
-                                                        break;
-                                        }
-                                }
-
-                                if(auxCrawlingNode->type == AST_VAR){
-                                        table_p otherEntry = search_table_entry(auxCrawlingNode, scope);
-
-                                        if(otherEntry == NULL)
-                                                break;
-
-                                        if(otherEntry->objectType == AST_ARRAY &&
-                                           auxEntry->params[i] != AST_ARRAY_PARAM)
-                                                break;
-
-                                        if(otherEntry->objectType == AST_VAR &&
-                                           auxEntry->params[i] != AST_VAR_PARAM)
-                                                break;
-                                }
-
-                                auxCrawlingNode = auxCrawlingNode->sibling;
-                        }
-
-                        if(auxCrawlingNode != NULL){
-                                printf("ERRO SEMANTICO: parametros passados para funcao %s invalidos. LINHA: %d.\n", node->id, node->line);
-                                break;
-                        }
-
-                        auxEntry->lines[auxEntry->linesIndex] = node->line;
-                        (auxEntry->linesIndex)++;
+                        if(node->visited == FALSE)
+                                check_function_call(node, scope);
                         
                         break;
                 }
@@ -396,13 +271,6 @@ void check_main_function(ast_p root){
                 printf("ERRO SEMANTICO: funcao main deve ser definida como void. LINHA: %d\n", root->line);
                 return;
         }
-
-        root = root->children[STMT_CHILD];
-        while(root->sibling)
-                root = root->sibling;
-
-        if(root->type == AST_RETURN)
-                printf("ERRO SEMANTICO: funcao main nao utiliza controle de fluxo return. LINHA: %d\n", root->line);
 }
 
 /*
@@ -411,6 +279,7 @@ void check_main_function(ast_p root){
  * Busca a entrada correspondente ao nó utilizado como argumento
  * e retorna a entrada se for encontrada. Busca primeiro pela funcao
  * em seguida pela variavel no escopo e por fim pela variavel global.
+ * Para buscar apenas funções passe NULL como escopo.
  */
 table_p search_table_entry(ast_p node, char* scope){
         table_p aux;
@@ -458,23 +327,51 @@ table_p search_table_entry(ast_p node, char* scope){
 }
 
 /*
- * Argumento: nó raiz da expressão
+ * Argumento: nó raiz da expressão e escopo do nó
  * Retorna: vazio
  * Checa se os valores da expressão
  * são válidos na atribuição de valores.
  */
-void check_assignment(ast_p expRoot){
+void check_assignment(ast_p expRoot, char* scope){
         if(expRoot == NULL)
                 return;
 
+        expRoot->visited = TRUE;
+
         switch(expRoot->type){
                 case AST_ARRAY:{
+                        check_variable_consistency(expRoot, scope);
+
+                        if(expRoot->children[INDEX_CHILD] == NULL)
+                                printf("ERRO SEMANTICO: variavel %s do tipo arrary deve ser indexado em uma atribuicao. LINHA: %d.\n", expRoot->id, expRoot->line);
+                        
+                        break;
+                }
+                case AST_VAR: {
+                        check_variable_consistency(expRoot, scope);
+                        break;
+                }
+                case AST_FUN: {
+                        check_function_call(expRoot, scope);
+                        break;
+                }
+                case AST_ASSIGNMENT: {
+                        table_p auxEntry = search_table_entry(expRoot, scope);
+                        check_variable_consistency(expRoot, scope);
+
+                        if(expRoot->children[INDEX_CHILD] == NULL && auxEntry->objectType == AST_ARRAY)
+                                printf("ERRO SEMANTICO: variavel %s do tipo arrary deve ser indexado em uma atribuicao. LINHA: %d.\n", expRoot->id, expRoot->line);
+
+                        check_assignment(expRoot->children[EXP_CHILD], scope);
+
+                        return;
                 }
                 default:
                         break;
         }
 
-        expRoot->visited = TRUE;
+        check_assignment(expRoot->children[LEFT_CHILD], scope);
+        check_assignment(expRoot->children[RIGHT_CHILD], scope);
 }
 
 /* 
@@ -487,6 +384,7 @@ void check_variable_consistency(ast_p node, char* scope){
         table_p auxEntry;
 
         auxEntry = search_table_entry(node, scope);
+        node->visited = TRUE;
 
         if(auxEntry == NULL){
                 printf("ERRO SEMANTICO: variavel %s nao delcarada antes do uso. LINHA: %d.\n", node->id, node->line);
@@ -495,6 +393,189 @@ void check_variable_consistency(ast_p node, char* scope){
 
         if(auxEntry->objectType == AST_FUN){
                 printf("ERRO SEMANTICO: identificardor utilizado na declaracao de funcao %s. LINHA: %d.\n", node->id, node->line);
+                return;
+        }
+
+        auxEntry->lines[auxEntry->linesIndex] = node->line;
+        (auxEntry->linesIndex)++;
+}
+
+/* 
+ * Argumentos: nó da árvore e escopo do nó
+ * Retorna: vazio
+ * Confere a unicidade na declaração de variáveis
+ */
+void check_variable_unity(ast_p node, char* scope){
+        table_p auxEntry;
+        char hashKey[ID_LENGTH];
+        int hashIndex;
+
+        node->visited = TRUE;
+
+        if(node->typeSpecifier != INT)
+                printf("ERRO SEMANTICO: variavel %s sendo declarada como tipo void. LINHA: %d\n", node->id, node->line);
+
+        strcpy(hashKey, scope);
+        strcat(hashKey, node->id);
+        hashIndex = semantic_hash(hashKey);
+        auxEntry = symbol_table[hashIndex];
+
+        while(auxEntry){
+                if(!strcmp(node->id, auxEntry->id))
+                        break;
+                auxEntry = auxEntry->next;
+        }
+
+        if(auxEntry == NULL){
+                char hashKey[ID_LENGTH];
+                strcpy(hashKey, scope);
+                strcat(hashKey, node->id);
+                int entryHash = semantic_hash(hashKey);
+                table_p newEntry = create_table_entry();
+
+                if(node->type == AST_ARRAY_DECL || node->type == AST_ARRAY_PARAM){
+                        newEntry->dataType = "array";
+                        newEntry->objectType = AST_ARRAY;
+                }
+                else{
+                        newEntry->dataType = "variable";
+                        newEntry->objectType = AST_VAR;
+                }
+                newEntry->type = "int";
+                newEntry->typeSpecifier = INT;
+                newEntry->id = node->id;
+                newEntry->scope = scope;
+                newEntry->lines[newEntry->linesIndex] = node->line;
+                (newEntry->linesIndex)++;
+
+                insert_symbol_table(newEntry, entryHash);
+
+                return;
+        }
+
+        if(auxEntry->objectType == AST_FUN){
+                printf("ERRO SEMANTICO: identificardor utilizado na declaracao de funcao %s. LINHA: %d.\n", node->id, node->line);
+                return;
+        }
+                        
+
+        if(!strcmp(auxEntry->scope, scope)){
+                printf("ERRO SEMANTICO: variavel %s ja declarada nesse escopo. LINHA: %d.\n", node->id, node->line);
+                return;
+         }
+
+}
+
+/*
+ * Argumentos: nó da árvore e escopo do nó
+ * Retorna: vazio
+ * Checa a consistência de declarações de funções
+ * e também organiza a lista de parâmetros para 
+ * checagem em futurar chamadas da função
+ */
+void check_function_declaration(ast_p node, char* scope){
+        ast_p auxCrawlingNode = node->children[PARAM_CHILD];
+        table_p auxEntry = search_table_entry(node, NULL);
+
+        node->visited = TRUE;
+
+        if(auxEntry != NULL){
+                printf("ERRO SEMANTICO: identificardor %s ja declarado. LINHA: %d.\n", node->id, node->line);
+                return;
+        }
+
+        table_p newEntry = create_table_entry();
+        newEntry->dataType = "function";
+        newEntry->objectType = AST_FUN;
+        if(node->typeSpecifier == INT){
+                newEntry->type = "int";
+                newEntry->typeSpecifier = INT;
+        }
+        else{
+                newEntry->type = "void";
+                newEntry->typeSpecifier = VOID;
+        }
+        newEntry->id = node->id;
+        newEntry->scope = scope;
+        newEntry->lines[newEntry->linesIndex] = node->line;
+        (newEntry->linesIndex)++;
+
+        while(auxCrawlingNode){
+                if(auxCrawlingNode->type == AST_VOID)
+                        break;
+                newEntry->params[newEntry->paramsIndex] = auxCrawlingNode->type;
+                (newEntry->paramsIndex)++;
+                auxCrawlingNode = auxCrawlingNode->sibling;
+        }
+
+        insert_symbol_table(newEntry, semantic_hash(node->id));
+}
+
+/*
+ * Argumentos: nó da árvore e escopo do nó
+ * Retorna: vazio
+ * Checa se a função chamada existe e se existir
+ * checa se os parâmetros passados na chamada
+ * são consistentes.
+ */
+void check_function_call(ast_p node, char* scope){
+        table_p auxEntry = search_table_entry(node, NULL);
+        ast_p auxCrawlingNode;
+
+        node->visited = TRUE;
+
+        if(auxEntry == NULL){
+                printf("ERRO SEMANTICO: funcao %s nao delcarada antes do uso. LINHA: %d.\n", node->id, node->line);
+                return;
+        }
+
+        auxCrawlingNode = node->children[PARAM_CHILD];
+
+        for(int i=0; i < auxEntry->paramsIndex; i++){
+                if(auxCrawlingNode->type == AST_CONST || 
+                   auxCrawlingNode->type == AST_OPERAND)
+                        if(auxEntry->params[i] != AST_VAR_PARAM)
+                                break;
+
+                if(auxCrawlingNode->type == AST_FUN){
+                        table_p otherEntry = search_table_entry(auxCrawlingNode, NULL);
+                        if(otherEntry == NULL ||
+                           otherEntry->typeSpecifier != INT ||
+                           auxEntry->params[i] != AST_VAR_PARAM)
+                                break;
+                }
+
+                if(auxCrawlingNode->type == AST_ARRAY){
+                        // Se tem referência, temos um inteiro
+                        if(auxCrawlingNode->children[INDEX_CHILD]){
+                                if(auxEntry->params[i] != AST_VAR_PARAM)
+                                        break;
+                        }
+                        else{
+                                if(auxEntry->params[i] != AST_ARRAY_PARAM)
+                                        break;
+                        }
+                }
+
+                if(auxCrawlingNode->type == AST_VAR){
+                        table_p otherEntry = search_table_entry(auxCrawlingNode, scope);
+                                if(otherEntry == NULL)
+                                break;
+
+                        if(otherEntry->objectType == AST_ARRAY &&
+                           auxEntry->params[i] != AST_ARRAY_PARAM)
+                                break;
+
+                        if(otherEntry->objectType == AST_VAR &&
+                           auxEntry->params[i] != AST_VAR_PARAM)
+                                break;
+                }
+
+                auxCrawlingNode = auxCrawlingNode->sibling;
+        }
+
+        if(auxCrawlingNode != NULL){
+                printf("ERRO SEMANTICO: parametros passados para funcao %s invalidos. LINHA: %d.\n", node->id, node->line);
                 return;
         }
 

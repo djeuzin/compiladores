@@ -61,9 +61,18 @@ void check_main_function(ast_p);
 table_p search_table_entry(ast_p, char*);
 
 // Checa se uma atribuição está consistente
-void check_assignment(ast_p);
+void check_assignment(ast_p, char*);
 
 // Checa consistência de uma variável
 void check_variable_consistency(ast_p, char*);
+
+// Checa a consistência de declaração de variáveis
+void check_variable_unity(ast_p, char*);
+
+// Checa a consistência na declaração de funções
+void check_function_declaration(ast_p, char*);
+
+// Checa a consistência na chamada de funções
+void check_function_call(ast_p, char*);
 
 #endif
