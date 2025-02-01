@@ -229,7 +229,6 @@ struct symbolTable{
         char* type;
         char* dataType;
         // Variáveis para implementar a lógica da tabela
-        int numberOfParams;
         int params[NUMBER_OF_REFERENCES];
         int paramsIndex;
         int lines[NUMBER_OF_REFERENCES];

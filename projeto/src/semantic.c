@@ -7,6 +7,7 @@
 /******************************/
 
 #include "semantic.h"
+#include "parser.h"
 #include "types.h"
 #include <stdio.h>
 
@@ -47,6 +48,31 @@ void semantic_analysis(void){
 void init_symbol_table(){
         for(int i=0; i<SYMBOL_TABLE_SIZE; i++)
                 symbol_table[i] = NULL;
+
+        table_p inputFunction = create_table_entry();
+
+        inputFunction->dataType = "function";
+        inputFunction->objectType = AST_FUN;
+        inputFunction->type = "int";
+        inputFunction->typeSpecifier = INT;
+        inputFunction->id = "input";
+        inputFunction->scope = "global";
+        inputFunction->paramsIndex = 0;
+
+        insert_symbol_table(inputFunction, semantic_hash("input"));
+
+        table_p outputFunction = create_table_entry();
+
+        outputFunction->dataType = "function";
+        outputFunction->objectType = AST_FUN;
+        outputFunction->type = "void";
+        outputFunction->typeSpecifier = VOID;
+        outputFunction->id = "output";
+        outputFunction->scope = "global";
+        outputFunction->paramsIndex = 1;
+        outputFunction->params[0] = AST_VAR_PARAM;
+
+        insert_symbol_table(outputFunction, semantic_hash("output"));
 }
 
 /*
@@ -237,6 +263,70 @@ void fill_table(ast_p node, char* scope){
                         break;
                 }
 	        case AST_FUN: {
+                        table_p auxEntry = search_table_entry(node, NULL);
+                        ast_p auxCrawlingNode;
+
+                        if(auxEntry == NULL){
+                                printf("ERRO SEMANTICO: funcao %s nao delcarada antes do uso. LINHA: %d.\n", node->id, node->line);
+                                break;
+                        }
+
+                        auxCrawlingNode = node->children[PARAM_CHILD];
+
+                        for(int i=0; i < auxEntry->paramsIndex; i++){
+                                if(auxCrawlingNode->type == AST_CONST || 
+                                   auxCrawlingNode->type == AST_OPERAND)
+                                        if(auxEntry->params[i] != AST_VAR_PARAM)
+                                                break;
+
+                                if(auxCrawlingNode->type == AST_FUN){
+                                        table_p otherEntry = search_table_entry(auxCrawlingNode, NULL);
+
+                                        if(otherEntry == NULL ||
+                                           otherEntry->typeSpecifier != INT ||
+                                           auxEntry->params[i] != AST_VAR_PARAM)
+                                                break;
+                                }
+
+                                if(auxCrawlingNode->type == AST_ARRAY){
+                                        // Se tem referência, temos um inteiro
+                                        if(auxCrawlingNode->children[INDEX_CHILD]){
+                                                if(auxEntry->params[i] != AST_VAR_PARAM)
+                                                        break;
+                                        }
+                                        else{
+                                                if(auxEntry->params[i] != AST_ARRAY_PARAM)
+                                                        break;
+                                        }
+                                }
+
+                                if(auxCrawlingNode->type == AST_VAR){
+                                        table_p otherEntry = search_table_entry(auxCrawlingNode, scope);
+
+                                        if(otherEntry == NULL)
+                                                break;
+
+                                        if(otherEntry->objectType == AST_ARRAY &&
+                                           auxEntry->params[i] != AST_ARRAY_PARAM)
+                                                break;
+
+                                        if(otherEntry->objectType == AST_VAR &&
+                                           auxEntry->params[i] != AST_VAR_PARAM)
+                                                break;
+                                }
+
+                                auxCrawlingNode = auxCrawlingNode->sibling;
+                        }
+
+                        if(auxCrawlingNode != NULL){
+                                printf("ERRO SEMANTICO: parametros passados para funcao %s invalidos. LINHA: %d.\n", node->id, node->line);
+                                break;
+                        }
+
+                        auxEntry->lines[auxEntry->linesIndex] = node->line;
+                        (auxEntry->linesIndex)++;
+                        
+                        break;
                 }
                 default:
                 break;
