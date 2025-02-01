@@ -45,4 +45,7 @@ void print_ast(ast_p, int);
 // Exibe a tabela de símbolos
 void print_symbol_table();
 
+// Exibe uma linha da tabela de símbolos
+void print_list(table_p);
+
 #endif

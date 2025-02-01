@@ -6,6 +6,7 @@
 /*****************************/
 
 #include "utils.h"
+#include "semantic.h"
 
 /*
  * Argumento: string
@@ -322,5 +323,27 @@ void print_symbol_table(){
         printf("# TABELA DE SIMBOLOS\n");
         printf("Nome_ID;Escopo;Tipo_ID;Tipo_dado;Linhas\n");
 
-        for(int i = 0; i<SYMBOL_TABLE_SIZE; i++);
+        for(int i = 0; i<SYMBOL_TABLE_SIZE; i++){
+                print_list(symbol_table[i]);
+        }
+}
+
+/*
+ * Argumento: cabeça da lista
+ * Retorna: vazio
+ * Imprime os dados de uma lista a partir 
+ * da cabeça
+ */
+void print_list(table_p listHead){
+        while(listHead){
+                printf("%s;%s;%s;%s;", listHead->id, listHead->scope, listHead->type, listHead->dataType);
+                for(int i=0; i<listHead->linesIndex; i++){
+                        printf("%d", listHead->lines[i]);
+                        if(i+1 != listHead->linesIndex)
+                                printf(",");
+                }
+                printf("\n");
+
+                listHead = listHead->next;
+        }
 }
