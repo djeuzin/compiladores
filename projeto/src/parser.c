@@ -627,6 +627,8 @@ ast_p ast_create_node(){
 void set_dummy_data(){
 	switch(mainLex.token){
 		case ID:
+			if(dummyNode->typeSpecifier == -1)
+				dummyNode->typeSpecifier = INT;
 			dummyNode->token = mainLex.token;
 			strcpy(dummyNode->id, mainLex.word);
 			dummyNode->line = mainLex.line;
