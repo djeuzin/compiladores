@@ -18,8 +18,12 @@
 
 // Número máximo de filhos de um nó da árvore sintática abstrata
 #define AST_MAX_CHILDREN 3
+
 // Tamanho máximo dos identificadores
-#define ID_LENGTH 30
+#define ID_LENGTH 100
+
+// Número máximo de referências a um identificador
+#define NUMBER_OF_REFERENCES 256
 
 // Índices dos fihos do nó da árvore sintática abstrata
 #define PARAM_CHILD 0
@@ -224,8 +228,11 @@ struct symbolTable{
         char* scope;
         char* type;
         char* dataType;
-        int line;
         int numberOfParams;
+        int params[NUMBER_OF_REFERENCES];
+        int paramsIndex;
+        int lines[NUMBER_OF_REFERENCES];
+        int linesIndex;
         struct symbolTable* next;
 };
 typedef struct symbolTable* table_p;
