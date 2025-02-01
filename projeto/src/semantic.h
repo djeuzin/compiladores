@@ -58,6 +58,6 @@ void insert_symbol_table(table_p, int);
 void check_main_function(ast_p);
 
 // Procura uma entrada na tabela associada a um nó
-table_p search_table_entry(ast_p, int);
+table_p search_table_entry(ast_p, char*);
 
 #endif
