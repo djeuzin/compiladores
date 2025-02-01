@@ -128,19 +128,123 @@ int semantic_hash(char* word){
  */
 void fill_table(ast_p node, char* scope){
         switch(node->type){
-                case AST_ARRAY_PARAM: 
                 case AST_ARRAY_DECL: 
+                case AST_ARRAY_PARAM: {
+                        table_p aux;
+
+                        aux = search_table_entry(node, semantic_hash(node->id));
+                        if(aux){
+                                printf("ERRO SEMANTICO: identificardor utilizado na declaracao de funcao %s. LINHA: %d.\n", node->id, node->line);
+                                break;
+                        }
+
+                        if(node->typeSpecifier != INT)
+                                printf("ERRO SEMANTICO: variavel %s sendo declarada como tipo void. LINHA: %d\n", node->id, node->line);
+                        
+                        char hashKey[ID_LENGTH];
+                        strcpy(hashKey, scope);
+                        strcat(hashKey, node->id);
+                        int entryHash = semantic_hash(hashKey);
+
+                        aux = search_table_entry(node, entryHash);
+                        if(aux){
+                                printf("ERRO SEMANTICO: variavel %s ja declarada nesse escopo. LINHA: %d.\n", node->id, node->line);
+                                break;
+                        }
+
+                        table_p newEntry = create_table_entry();
+                        newEntry->dataType = "array";
+                        newEntry->type = "int";
+                        newEntry->declaration = TRUE;
+                        newEntry->id = node->id;
+                        newEntry->scope = scope;
+                        newEntry->lines[newEntry->linesIndex] = node->line;
+                        (newEntry->linesIndex)++;
+
+                        insert_symbol_table(newEntry, entryHash);
+
+                        break;
+                } 
                 case AST_VAR_PARAM: 
 	        case AST_VAR_DECL: {
+                        table_p aux;
+
+                        aux = search_table_entry(node, semantic_hash(node->id));
+                        if(aux){
+                                printf("ERRO SEMANTICO: identificardor utilizado na declaracao de funcao %s. LINHA: %d.\n", node->id, node->line);
+                                break;
+                        }
+
                         if(node->typeSpecifier != INT)
-                                printf("ERRO SEMANTICO: variavel sendo declarada como tipo void. LINHA: %d\n", node->line);
+                                printf("ERRO SEMANTICO: variavel %s sendo declarada como tipo void. LINHA: %d\n", node->id, node->line);
+                        
+                        char hashKey[ID_LENGTH];
+                        strcpy(hashKey, scope);
+                        strcat(hashKey, node->id);
+                        int entryHash = semantic_hash(hashKey);
+
+                        aux = search_table_entry(node, entryHash);
+                        if(aux){
+                                printf("ERRO SEMANTICO: variavel %s ja declarada nesse escopo. LINHA: %d.\n", node->id, node->line);
+                                break;
+                        }
+
+                        table_p newEntry = create_table_entry();
+                        newEntry->dataType = "variable";
+                        newEntry->type = "int";
+                        newEntry->declaration = TRUE;
+                        newEntry->id = node->id;
+                        newEntry->scope = scope;
+                        newEntry->lines[newEntry->linesIndex] = node->line;
+                        (newEntry->linesIndex)++;
+
+                        insert_symbol_table(newEntry, entryHash);
+
                         break;
                 } 
                 case AST_ARRAY:
-	        case AST_FUN_DECL:
-                case AST_VAR: 
-	        case AST_FUN:
                 case AST_ASSIGNMENT:
+                case AST_VAR: {
+                        table_p aux;
+
+                        aux = search_table_entry(node, semantic_hash(node->id));
+                        if(aux){
+                                printf("ERRO SEMANTICO: identificardor utilizado na declaracao de funcao %s. LINHA: %d.\n", node->id, node->line);
+                                break;
+                        }
+
+                        if(node->typeSpecifier != INT)
+                                printf("ERRO SEMANTICO: variavel %s sendo declarada como tipo void. LINHA: %d\n", node->id, node->line);
+                        
+                        char hashKey[ID_LENGTH];
+                        strcpy(hashKey, scope);
+                        strcat(hashKey, node->id);
+                        int entryHash = semantic_hash(hashKey);
+
+                        aux = search_table_entry(node, entryHash); 
+                        if(aux == NULL){
+                                // Não achou no escopo, procurar definição global
+                                strcpy(hashKey, "global");
+                                strcat(hashKey, node->id);
+                                aux = search_table_entry(node, semantic_hash(hashKey));
+                                if(aux){
+                                        aux->lines[aux->linesIndex] = node->line;
+                                        (aux->linesIndex)++;
+                                        break;
+                                }
+                                else{
+                                        printf("ERRO SEMANTICO: variavel %s nao delcarada. LINHA: %d.\n", node->id, node->line);
+                                        break;
+                                }
+                        }
+
+                        aux->lines[aux->linesIndex] = node->line;
+                        (aux->linesIndex)++;
+
+                        break;
+                }
+                case AST_FUN_DECL: 
+	        case AST_FUN:
                 default:
                 break;
         }
@@ -159,9 +263,9 @@ table_p create_table_entry(){
         newEntry->next = NULL;
         newEntry->scope = NULL;
         newEntry->type = NULL;
-        newEntry->line = -1;
         newEntry->declaration = FALSE;
-
+        newEntry->paramsIndex = 0;
+        newEntry->linesIndex = 0;
         return newEntry;
 }
 
@@ -224,4 +328,24 @@ void check_main_function(ast_p root){
 
         if(root->type == AST_RETURN)
                 printf("ERRO SEMANTICO: funcao main nao utiliza controle de fluxo return. LINHA: %d\n", root->line);
+}
+
+/*
+ * Argumento: nó da árvore e índice na tabela hash
+ * Retorna: TRUE ou FALSE
+ * Busca a entrada correspondente ao nó utilizado como argumento
+ * e retorna verdadeiro se encontrar.
+ */
+table_p search_table_entry(ast_p node, int hashIndex){
+        table_p aux;
+
+        aux = symbol_table[hashIndex];
+
+        while(aux){
+                if(!strcmp(node->id, aux->id))
+                        return aux;
+                aux = aux->next;
+        }
+
+        return NULL;
 }

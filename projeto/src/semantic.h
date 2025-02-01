@@ -57,4 +57,7 @@ void insert_symbol_table(table_p, int);
 // Checa se a última função é main
 void check_main_function(ast_p);
 
+// Procura uma entrada na tabela associada a um nó
+table_p search_table_entry(ast_p, int);
+
 #endif
