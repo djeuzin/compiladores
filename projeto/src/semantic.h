@@ -75,4 +75,7 @@ void check_function_declaration(ast_p, char*);
 // Checa a consistência na chamada de funções
 void check_function_call(ast_p, char*);
 
+// Checa a consistência dos returns em uma função
+void check_return(ast_p, char*);
+
 #endif

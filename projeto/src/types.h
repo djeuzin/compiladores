@@ -23,7 +23,7 @@
 #define ID_LENGTH 100
 
 // Número máximo de referências a um identificador
-#define NUMBER_OF_REFERENCES 256
+#define NUMBER_OF_REFERENCES 500
 
 // Índices dos fihos do nó da árvore sintática abstrata
 #define PARAM_CHILD 0

@@ -19,9 +19,8 @@ table_p symbol_table[SYMBOL_TABLE_SIZE];
 /* 
  * Argumento: vazio
  * Retorna: vazio
- * Realiza duas passadas pela árvore sintáitca.
- * Na primeira constói a tabela de símbolos.
- * Na segunda confere se está correta.
+ * Realiza uma passada pela árvore sintáitca
+ * e monta a tabela de símbolos.
  */
 void semantic_analysis(void){
         ast_p nodePtr = syntaxTree;
@@ -45,7 +44,9 @@ void semantic_analysis(void){
 /* 
  * Argumento: vazio
  * Retorna: vazio
- * Preenche cada posição da tabela com ponteiros NULL
+ * Preenche cada posição da tabela com ponteiros NULL.
+ * Também adiciona as funções input() e output()
+ * na tabela de símbolos.
  */
 void init_symbol_table(){
         for(int i=0; i<SYMBOL_TABLE_SIZE; i++)
@@ -178,7 +179,7 @@ void fill_table(ast_p node, char* scope){
                                 check_variable_consistency(node, scope);
                                 
                                 if(node->children[INDEX_CHILD] == NULL && auxEntry->objectType == AST_ARRAY)
-                                        printf("ERRO SEMANTICO: variavel %s do tipo arrary deve ser indexado em uma atribuicao. LINHA: %d.\n", node->id, node->line);
+                                        printf("ERRO SEMANTICO: variavel \"%s\" do tipo arrary deve ser indexado em uma atribuicao. LINHA: %d.\n", node->id, node->line);
 
                                 check_assignment(node->children[EXP_CHILD], scope);
                         }
@@ -194,6 +195,11 @@ void fill_table(ast_p node, char* scope){
                         if(node->visited == FALSE)
                                 check_function_call(node, scope);
                         
+                        break;
+                }
+                case AST_RETURN: {
+                        check_return(node, scope);
+
                         break;
                 }
                 default:
@@ -343,7 +349,7 @@ void check_assignment(ast_p expRoot, char* scope){
                         check_variable_consistency(expRoot, scope);
 
                         if(expRoot->children[INDEX_CHILD] == NULL)
-                                printf("ERRO SEMANTICO: variavel %s do tipo arrary deve ser indexado em uma atribuicao. LINHA: %d.\n", expRoot->id, expRoot->line);
+                                printf("ERRO SEMANTICO: variavel \"%s\" do tipo arrary deve ser indexado em uma atribuicao. LINHA: %d.\n", expRoot->id, expRoot->line);
                         
                         break;
                 }
@@ -360,7 +366,7 @@ void check_assignment(ast_p expRoot, char* scope){
                         check_variable_consistency(expRoot, scope);
 
                         if(expRoot->children[INDEX_CHILD] == NULL && auxEntry->objectType == AST_ARRAY)
-                                printf("ERRO SEMANTICO: variavel %s do tipo arrary deve ser indexado em uma atribuicao. LINHA: %d.\n", expRoot->id, expRoot->line);
+                                printf("ERRO SEMANTICO: variavel \"%s\" do tipo arrary deve ser indexado em uma atribuicao. LINHA: %d.\n", expRoot->id, expRoot->line);
 
                         check_assignment(expRoot->children[EXP_CHILD], scope);
 
@@ -387,7 +393,7 @@ void check_variable_consistency(ast_p node, char* scope){
         node->visited = TRUE;
 
         if(auxEntry == NULL){
-                printf("ERRO SEMANTICO: variavel %s nao delcarada antes do uso. LINHA: %d.\n", node->id, node->line);
+                printf("ERRO SEMANTICO: variavel \"%s\" nao delcarada antes do uso. LINHA: %d.\n", node->id, node->line);
                 return;
         }
 
@@ -413,7 +419,7 @@ void check_variable_unity(ast_p node, char* scope){
         node->visited = TRUE;
 
         if(node->typeSpecifier != INT)
-                printf("ERRO SEMANTICO: variavel %s sendo declarada como tipo void. LINHA: %d\n", node->id, node->line);
+                printf("ERRO SEMANTICO: variavel \"%s\" sendo declarada como tipo void. LINHA: %d\n", node->id, node->line);
 
         strcpy(hashKey, scope);
         strcat(hashKey, node->id);
@@ -460,7 +466,7 @@ void check_variable_unity(ast_p node, char* scope){
                         
 
         if(!strcmp(auxEntry->scope, scope)){
-                printf("ERRO SEMANTICO: variavel %s ja declarada nesse escopo. LINHA: %d.\n", node->id, node->line);
+                printf("ERRO SEMANTICO: variavel \"%s\" ja declarada nesse escopo. LINHA: %d.\n", node->id, node->line);
                 return;
          }
 
@@ -480,7 +486,7 @@ void check_function_declaration(ast_p node, char* scope){
         node->visited = TRUE;
 
         if(auxEntry != NULL){
-                printf("ERRO SEMANTICO: identificardor %s ja declarado. LINHA: %d.\n", node->id, node->line);
+                printf("ERRO SEMANTICO: identificardor \"%s\" ja declarado. LINHA: %d.\n", node->id, node->line);
                 return;
         }
 
@@ -525,7 +531,7 @@ void check_function_call(ast_p node, char* scope){
         node->visited = TRUE;
 
         if(auxEntry == NULL){
-                printf("ERRO SEMANTICO: funcao %s nao delcarada antes do uso. LINHA: %d.\n", node->id, node->line);
+                printf("ERRO SEMANTICO: funcao \"%s\" nao delcarada antes do uso. LINHA: %d.\n", node->id, node->line);
                 return;
         }
 
@@ -575,10 +581,36 @@ void check_function_call(ast_p node, char* scope){
         }
 
         if(auxCrawlingNode != NULL){
-                printf("ERRO SEMANTICO: parametros passados para funcao %s invalidos. LINHA: %d.\n", node->id, node->line);
+                printf("ERRO SEMANTICO: parametros passados para funcao \"%s\" invalidos. LINHA: %d.\n", node->id, node->line);
                 return;
         }
 
         auxEntry->lines[auxEntry->linesIndex] = node->line;
         (auxEntry->linesIndex)++;
+}
+
+/* 
+ * Argumentos: nó da árvore e escopo do nó
+ * Retorna: vazio
+ * Checa se o return condiz com a declaração de 
+ * tipo da função.
+ */
+void check_return(ast_p node, char* scope){
+        table_p auxEntry;
+        int hashIndex;
+
+        hashIndex = semantic_hash(scope);
+        auxEntry = symbol_table[hashIndex];
+
+        while(auxEntry){
+                if(!strcmp(scope, auxEntry->id))
+                        break;
+                auxEntry = auxEntry->next;
+        }
+
+        if(node->children[EXP_CHILD] == NULL && auxEntry->typeSpecifier == INT)
+                printf("ERRO SEMANTICO: funcao \"%s\" de retorno int nao retorna nenhum valor. LINHA: %d.\n", auxEntry->id, node->line);
+
+        if(node->children[EXP_CHILD] != NULL && auxEntry->typeSpecifier == VOID)
+                printf("ERRO SEMANTICO: funcao \"%s\" de retorno void retornando valor. LINHA: %d.\n", auxEntry->id, node->line);
 }
