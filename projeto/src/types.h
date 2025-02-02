@@ -236,6 +236,7 @@ struct symbolTable{
         int linesIndex;
         int typeSpecifier;
         int objectType;
+        int hasReturn;
         struct symbolTable* next;
 };
 typedef struct symbolTable* table_p;

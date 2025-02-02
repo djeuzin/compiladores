@@ -127,6 +127,9 @@ void recursive_analysis(ast_p node, char* scope, int depth){
 
         for(int i=0; i<AST_MAX_CHILDREN; i++)
                 recursive_analysis(node->children[i], dadScope, depth+1);
+
+        if(node->type == AST_FUN_DECL)
+                check_return_validity(node);
         
         if(node->sibling)
                 recursive_analysis(node->sibling, scope, depth);
@@ -200,6 +203,9 @@ void fill_table(ast_p node, char* scope){
                 case AST_RETURN: {
                         check_return(node, scope);
 
+                        if(node->sibling != NULL)
+                                printf("ERRO SEMANTICO: declaracoes alem de uma declaracao return. LINHA: %d.\n", node->line);
+
                         break;
                 }
                 default:
@@ -222,6 +228,7 @@ table_p create_table_entry(){
         newEntry->type = NULL;
         newEntry->paramsIndex = 0;
         newEntry->linesIndex = 0;
+        newEntry->hasReturn = FALSE;
         return newEntry;
 }
 
@@ -608,9 +615,40 @@ void check_return(ast_p node, char* scope){
                 auxEntry = auxEntry->next;
         }
 
+        auxEntry->hasReturn = TRUE;
+
         if(node->children[EXP_CHILD] == NULL && auxEntry->typeSpecifier == INT)
                 printf("ERRO SEMANTICO: funcao \"%s\" de retorno int nao retorna nenhum valor. LINHA: %d.\n", auxEntry->id, node->line);
 
         if(node->children[EXP_CHILD] != NULL && auxEntry->typeSpecifier == VOID)
                 printf("ERRO SEMANTICO: funcao \"%s\" de retorno void retornando valor. LINHA: %d.\n", auxEntry->id, node->line);
 }
+
+/*
+ * Argumentos: nó de declaração de função
+ * Retorna: vazio
+ * Checa se os returns são consistentes.
+ */
+void check_return_validity(ast_p node){
+        table_p auxEntry = search_table_entry(node, NULL);
+        ast_p auxCrawlingNode;
+
+        if(auxEntry->typeSpecifier == VOID)
+                return;
+
+        if(auxEntry->hasReturn == FALSE){
+                printf("ERRO SEMANTICO: funcao \"%s\" do tipo int sem retorno de valores. LINHA: %d.\n", node->id, node->line);
+                return;
+        }
+
+        auxCrawlingNode = node->children[STMT_CHILD];
+
+        while(auxCrawlingNode){
+                if(auxCrawlingNode->type == AST_RETURN)
+                        return;
+
+                auxCrawlingNode = auxCrawlingNode->sibling;
+        }
+
+        printf("ERRO SEMANTICO: funcao nao void \"%s\" atinge fim sem declaracao return. LINHA: %d.\n", node->id, node->line);
+}       
