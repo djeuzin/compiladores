@@ -9,7 +9,7 @@
 #include "parsing_table.h"
 
 int parsingTable[][44]= {
-//       ID, NUM,  +,  -,  *,  /,  <,  >,  =,  !=,  ;,  ,,  (,  ),  [,  ],  {,  }, ERR,  <=,  >=,  ==, ELSE,  IF, INT, RETURN, VOID, WHILE,   $
+//   ID, NUM,  +,  -,  *,  /,  <,  >,  =,  !=,  ;,  ,,  (,  ),  [,  ],  {,  }, ERR,  <=,  >=,  ==, ELSE,  IF, INT, RETURN, VOID, WHILE,   $
 	{ 0,   0,  0,  0,  0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0,  0,   0,   0,   0,   0,    0,   0,   1,      0,    1,     0,   0},  // PROG
 	{ 0,   0,  0,  0,  0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0,  0,   0,   0,   0,   0,    0,   0,   2,      0,    2,     0,   0},  // DECL_LIST
 	{ 0,   0,  0,  0,  0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0,  0,   0,   0,   0,   0,    0,   0,   3,      0,    3,     0,   4},  // DECL_LIST_
@@ -57,90 +57,99 @@ int parsingTable[][44]= {
 };
 
 /*
+A seguir está descrita a gramática discriminadas as produções.
+Os símbolos na descrição da gramática seguem as definições regulares:
+	-não-terminais = [a-z\-_]*
+	-terminais = ([A-Z] | _)* | ; | , | \( | \) | \[ | \] | \{ | \} | \* | / | + | \- | < | > | = | <= | >= | != | ==
+	-marcas de construcao da arvore sintatica = <([A-Z] | _)*>
 
-program 		-> declaration-list
-declaration-list 	-> <ADD_SIBLING_STOPPER> declaration declaration-list_ <ADD_SIBLINGS>
-declaration-list_ 	-> declaration declaration-list_
-declaration-list_ 	-> 
-declaration 		-> type-specifier ID declaration_
-declaration_ 		-> var-declaration_ 
-declaration_ 		-> ( <SET_FUN_DECL> <ADD_SIBLING_STOPPER> params ) <ADD_SIBLING> <ADD_PARAM_CHILD> compound-stmt <ADD_STMT_CHILD>
-var-declaration 	-> type-specifier ID var-declaration_
-var-declaration_ 	-> ; <SET_VAR_DECL>
-var-declaration_ 	-> [ NUM <SET_ARRAY_DECL> ] ;
-type-speficier 		-> INT 
-type-speficier 		-> VOID
-params			-> INT ID param_ param-list_ 
-params 			-> VOID void-params
-void-params		-> ID param_ param-list_ 
-void-params		-> <SET_VOID_PARAM>
-param-list 		-> param param-list_
-param-list_		-> , param param-list_ 
-param-list_ 		-> 
-param 			-> type-specifier ID param_
-param_ 			-> [] <SET_ARRAY_PARAM>
-param_ 			-> <SET_VAR_PARAM>
-compound-stmt 		-> { <ADD_SIBLING_STOPPER> local-declarations statement-list } <ADD_SIBLING>
-local-declarations 	-> local-declarations_
-local-declarations_	-> var-declaration local-declarations_ 
-local-declarations_	-> 
-statement-list 		-> statement-list_
-statement-list_		-> statement statement-list_ 
-statement-list_		-> 
-statement 		-> expression-stmt 
-statement 		-> compound-stmt 
-statement 		-> selection-stms 
-statement 		-> iteration-stmt 
-statement 		-> return-stmt
-expression-stmt 	-> expression; 
-expression-stmt 	-> ;
-selection-stmt 		-> IF ( expression ) <ADD_EXP_CHILD> statement <ADD_STMT_CHILD> selection-stmt_
-selection-stmt_		-> ELSE statement <ADD_ELSE_CHILD>
-selection-stmt_ 	-> 
-iteration-stmt 		-> WHILE ( expression ) <ADD_EXP_CHILD> statement <ADD_STMT_CHILD>
-return-stmt 		-> RETURN return-stmt_
-return-stmt_		-> ; 
-return-stmt_		-> expression ; <ADD_EXP_CHILD>
-expression 		-> ID expression_
-expression 		-> ( expression ) term_ add-expression_ simple-expression_ 
-expression 		-> NUM term_ add-expression_ simple-expression_
-expression_ 		-> var_ expression__ 
-expression_ 		-> ( <SET_FUN_CALL> <ADD_SIBLING_STOPPER> args ) <ADD_SIBLING> <ADD_PARAM_CHILD> term_ add-expression_ simple-expression_
-expression__		-> = expression <ADD_EXP_CHILD>
-expression__ 		-> term_ add-expression_ simple-expression_
-var 			-> ID var_
-var_ 			-> [ <SET_ARRAY> expression ] <ADD_INDEX_CHILD>
-var_ 			-> <SET_VAR>
-simple-expression_	-> relop additive-expression <BUILD_EXP>
-simple-expression_ 	-> 
-relop 			-> <= 
-relop 			-> < 
-relop 			-> > 
-relop 			-> >= 
-relop 			-> == 
-relop 			-> !=
-additive-expression 	-> term add-expression_
-add-expression_ 	-> addop term <BUILD_EXP> add-expression_
-add-expression_		-> 
-addop 			-> + 
-addop 			-> -
-term 			-> factor term_
-term_			-> mulop factor <BUILD_EXP> term_ 
-term_ 			-> 
-mulop 			-> * 
-mulop			-> /
-factor 			-> ( expression ) 
-factor 			-> ID factor_ 
-factor 			-> NUM 
-factor_ 		-> var_ 
-factor_ 		-> ( <SET_FUN_CALL> <ADD_SIBLING_STOPPER> args ) <ADD_SIBLING> <ADD_PARAM_CHILD>
-args 			-> arg-list 
-args 			-> 
-arg-list 		-> expression arg-list_
-arg-list_		-> , expression arg-list_
-arg-list_ 		-> 
+( 1) program 				-> declaration-list
+( 2) declaration-list 		-> <ADD_SIBLING_STOPPER> declaration declaration-list_ <ADD_SIBLINGS>
+( 3) declaration-list_ 		-> declaration declaration-list_
+( 4) declaration-list_ 		-> 
+( 5) declaration 			-> type-specifier ID declaration_
+( 6) declaration_ 			-> var-declaration_ 
+( 7) declaration_ 			-> ( <SET_FUN_DECL> <ADD_SIBLING_STOPPER> params ) <ADD_SIBLING> <ADD_PARAM_CHILD> compound-stmt <ADD_STMT_CHILD>
+( 8) var-declaration 		-> type-specifier ID var-declaration_
+( 9) var-declaration_ 		-> ; <SET_VAR_DECL>
+(10) var-declaration_ 		-> [ NUM <SET_ARRAY_DECL> ] ;
+(11) type-speficier 		-> INT 
+(12) type-speficier 		-> VOID
+(13) params					-> INT ID param_ param-list_ 
+(14) params 				-> VOID void-params
+(15) void-params			-> ID param_ param-list_ 
+(16) void-params			-> <SET_VOID_PARAM>
+(17) param-list 			-> param param-list_
+(18) param-list_			-> , param param-list_ 
+(19) param-list_ 			-> 
+(20) param 					-> type-specifier ID param_
+(21) param_ 				-> [] <SET_ARRAY_PARAM>
+(22) param_ 				-> <SET_VAR_PARAM>
+(23) compound-stmt 			-> { <ADD_SIBLING_STOPPER> local-declarations statement-list } <ADD_SIBLING>
+(24) local-declarations 	-> local-declarations_
+(25) local-declarations_	-> var-declaration local-declarations_ 
+(26) local-declarations_	-> 
+(27) statement-list 		-> statement-list_
+(28) statement-list_		-> statement statement-list_ 
+(29) statement-list_		-> 
+(30) statement 				-> expression-stmt 
+(31) statement 				-> compound-stmt 
+(32) statement 				-> selection-stms 
+(33) statement 				-> iteration-stmt 
+(34) statement 				-> return-stmt
+(35) expression-stmt 		-> expression; 
+(36) expression-stmt 		-> ;
+(37) selection-stmt 		-> IF ( expression ) <ADD_EXP_CHILD> statement <ADD_STMT_CHILD> selection-stmt_
+(38) selection-stmt_		-> ELSE statement <ADD_ELSE_CHILD>
+(39) selection-stmt_ 		-> 
+(40) iteration-stmt 		-> WHILE ( expression ) <ADD_EXP_CHILD> statement <ADD_STMT_CHILD>
+(41) return-stmt 			-> RETURN return-stmt_
+(42) return-stmt_			-> ; 
+(43) return-stmt_			-> expression ; <ADD_EXP_CHILD>
+(44) expression 			-> ID expression_
+(45) expression 			-> ( expression ) term_ add-expression_ simple-expression_ 
+(46) expression 			-> NUM term_ add-expression_ simple-expression_
+(47) expression_ 			-> var_ expression__ 
+(48) expression_ 			-> ( <SET_FUN_CALL> <ADD_SIBLING_STOPPER> args ) <ADD_SIBLING> <ADD_PARAM_CHILD> term_ add-expression_ simple-expression_
+(49) expression__			-> = expression <ADD_EXP_CHILD>
+(50) expression__ 			-> term_ add-expression_ simple-expression_
+(51) var 					-> ID var_
+(52) var_ 					-> [ <SET_ARRAY> expression ] <ADD_INDEX_CHILD>
+(53) var_ 					-> <SET_VAR>
+(54) simple-expression_		-> relop additive-expression <BUILD_EXP>
+(55) simple-expression_ 	-> 
+(56) relop 					-> <= 
+(57) relop 					-> < 
+(58) relop 					-> > 
+(59) relop 					-> >= 
+(60) relop 					-> == 
+(61) relop 					-> !=
+(62) additive-expression 	-> term add-expression_
+(63) add-expression_ 		-> addop term <BUILD_EXP> add-expression_
+(64) add-expression_		-> 
+(65) addop 					-> + 
+(66) addop 					-> -
+(67) term 					-> factor term_
+(68) term_					-> mulop factor <BUILD_EXP> term_ 
+(69) term_ 					-> 
+(70) mulop 					-> * 
+(71) mulop					-> /
+(72) factor 				-> ( expression ) 
+(73) factor 				-> ID factor_ 
+(74) factor 				-> NUM 
+(75) factor_ 				-> var_ 
+(76) factor_ 				-> ( <SET_FUN_CALL> <ADD_SIBLING_STOPPER> args ) <ADD_SIBLING> <ADD_PARAM_CHILD>
+(77) args 					-> arg-list 
+(78) args 					-> 
+(79) arg-list 				-> expression arg-list_
+(80) arg-list_				-> , expression arg-list_
+(81) arg-list_ 				-> 
 
 ----------------
+
+Essa é a gramática modificada a partir da gramática original.
+Essa versão da gramática não contém recursões à esquerda e está
+fatorada à esquerda.
 
 program				-> declaration-list
 declaration-list 	-> declaration declaration-list_
@@ -191,6 +200,8 @@ arg-list 			-> expression arg-list_
 arg-list_			-> , expression | eps
 
 --------First-------------
+Aqui estão descritos os conjuntos first dos não-terminais da gramática.
+"eps" representa a cadeia vazia.
 
 First(program) = {INT, VOID}
 First(declaration-list) = {INT, VOID}
@@ -238,6 +249,8 @@ First(arg-list) = {ID, NUM, '('}
 First(arg-list_) = {',', eps}
 
 --------Follow-------------
+Aqui estão descritos os conjuntos Follow dos não-terminais da gramática.
+"$" representa o símbolo de fundo da pilha de análise sintática.
 
 Follow(program) = {$}
 Follow(declaration-list) = {$}
