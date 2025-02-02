@@ -1,4 +1,4 @@
-Para compilar e executar basta digitar o comando ```make``` no diretório do projeto.
+Para compilar basta digitar o comando ```make``` no diretório do projeto.
 Após a compilação será gerado o arquivo executável ```cross```.
 
 ```console
