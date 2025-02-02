@@ -631,7 +631,6 @@ void check_return(ast_p node, char* scope){
  */
 void check_return_validity(ast_p node){
         table_p auxEntry = search_table_entry(node, NULL);
-        ast_p auxCrawlingNode;
 
         if(auxEntry->typeSpecifier == VOID)
                 return;
@@ -640,15 +639,4 @@ void check_return_validity(ast_p node){
                 printf("ERRO SEMANTICO: funcao \"%s\" do tipo int sem retorno de valores. LINHA: %d.\n", node->id, node->line);
                 return;
         }
-
-        auxCrawlingNode = node->children[STMT_CHILD];
-
-        while(auxCrawlingNode){
-                if(auxCrawlingNode->type == AST_RETURN)
-                        return;
-
-                auxCrawlingNode = auxCrawlingNode->sibling;
-        }
-
-        printf("ERRO SEMANTICO: funcao nao void \"%s\" atinge fim sem declaracao return. LINHA: %d.\n", node->id, node->line);
 }       

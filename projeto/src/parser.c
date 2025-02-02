@@ -75,8 +75,7 @@ void init_stack(){
  * Argumentos: int currentSymbol, int token
  * Retorna: inteiro
  * Compara currentSymbol com token. Se forem diferentes
- * indica erro e retorna FALSE, caso contrário retorna TRUE
- * indicando que houve sucesso na comparação.
+ * indica erro e retorna FALSE, caso contrário retorna TRUE.
  */
 int match(int currentSymbol, int token){
         if(currentSymbol != token){
@@ -90,6 +89,7 @@ int match(int currentSymbol, int token){
  * Argumento: vazio
  * Retorna: vazio
  * Exibe os elementos da pilha de derivação.
+ * Função utilizada durante desenvolvimento.
  */
 void print_stack(){
         parser_stack_p aux = parserStack;
@@ -107,6 +107,7 @@ void print_stack(){
  * a estrutura do programa parseado utilizando a tabela preditiva LL(1)
  */
 void parse(){
+	// Inidica o próximo passo de derivação a ser tomado
 	int nextStep;
 	int errorFlag = FALSE;
 
@@ -118,6 +119,12 @@ void parse(){
 	while(parserStack->symbol != ENDPARSE){
 		switch(parserStack->kind){
 			case TERMINAL: {
+				/*
+				 * Símbolo no topo da pilha de análise seintática é um terminal.
+				 * Se esse símbolo for diferente do que é lido na entrada indicamos
+				 * o erro. Em caso de sucesso criamos um nó receptáculo e o preenchemos
+				 * de acordo com o token lido. Por fim lemos o próximo token da entrada.
+				 */
 				pop_stack();
 				
 				if(!match(currentSymbol, mainLex.token) && errorFlag == FALSE){
@@ -143,6 +150,13 @@ void parse(){
 				break;
 			}
 			case NON_TERMINAL: {
+				/*
+				 * O símbolo no topo da pilha é um não-terminal.
+				 * Pela tabela de análise sintática LL(1) obtemos o próximo
+				 * passo de derivação. Caso a tabela aponte para o valor 0
+				 * indicamos o erro. Caso contrário, manipulamos a pilha
+				 * de análise de acordo com o passo de derivação.
+				 */
 				pop_stack();
 				nextStep = parsingTable[currentSymbol][mainLex.token];
 				
@@ -163,6 +177,13 @@ void parse(){
 				break;
 			}
 			case TREE_BUILDER:{
+				/*
+				 * O símbolo no topo da pilha é uma marca auxiliar para
+				 * construção de árvore. Se houve um erro durante a análise
+				 * a árvore não pode ser construída. Caso contrário, utilizando
+				 * o nó receptáculo e uma pilha auxiliar, construímos a árvore
+				 * sintática.
+				 */
 				pop_stack();
 
 				if(errorFlag == FALSE)
@@ -175,7 +196,8 @@ void parse(){
 
 	if(errorFlag == FALSE){	
 		if(mainLex.token != ENDFILE)
-			printf("ERRO GRAVE.\n");
+			printf("ERRO SINTATICO: ainda ha simbolos para serem lidos na entrada.\n");
+		
 		syntaxTree = ast_pop_stack();
 
 		if(parserFlag)

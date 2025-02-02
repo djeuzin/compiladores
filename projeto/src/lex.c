@@ -211,7 +211,7 @@ void wrap_lexem(){
         if(mainLex.token == ERR)
                 printf("ERRO LEXICO: \"%s\" INVALIDO [linha: %d], COLUNA %d.\n", mainLex.word, mainLex.line, mainLex.column);
         if(lexFlag)
-                print_lexem(mainLex);
+                print_lexem();
 }
 
 /*
