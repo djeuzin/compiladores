@@ -139,7 +139,7 @@ void parse(){
 							free(dummyNode);
 						dummyNode = NULL;
 					}
-					
+					get_next_lexem();
 					break;
 				}
 
@@ -165,7 +165,7 @@ void parse(){
 				nextStep = parsingTable[currentSymbol][mainLex.token];
 				
 				if(nextStep < 1){
-					printf("ERRO SINTATICO: \"%s\" INVALIDO [linha: %d], COLUNA %d.\n", mainLex.word, mainLex.line, mainLex.column);
+					printf("%dERRO SINTATICO: \"%s\" INVALIDO [linha: %d], COLUNA %d.\n", nextStep, mainLex.word, mainLex.line, mainLex.column);
 
 					if(errorFlag == FALSE){
 						errorFlag = TRUE;
@@ -175,18 +175,26 @@ void parse(){
 						dummyNode = NULL;
 					}
 
-					if(nextStep == -1){
-						pop_stack();
-						if(parserStack->kind == TERMINAL)
+					while(nextStep == -1){
+						if(parserStack->kind == TERMINAL || parserStack->kind == TREE_BUILDER)
 							pop_stack();
-						break;
+						else{
+							pop_stack();
+							nextStep = parsingTable[currentSymbol][mainLex.token];
+						}
 					}
 
-					push_stack(currentSymbol, NON_TERMINAL);
-					
-					while(parsingTable[currentSymbol][mainLex.token] == 0)
-						get_next_lexem();
-					break;
+					while(parserStack->kind != NON_TERMINAL)
+						pop_stack();
+					pop_stack();
+
+					if(nextStep == 0){
+						push_stack(currentSymbol, NON_TERMINAL);
+						
+						while(parsingTable[currentSymbol][mainLex.token] == 0)
+							get_next_lexem();
+						break;
+					}
 				}
 
 				handle_stack(nextStep);
