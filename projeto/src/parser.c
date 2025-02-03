@@ -6,6 +6,10 @@
 /**************************/
 
 #include "parser.h"
+#include "parsing_table.h"
+#include "types.h"
+#include "utils.h"
+#include <stdio.h>
 
 // Pilha de derivação da analisador sintático
 parser_stack_p parserStack;
@@ -127,16 +131,16 @@ void parse(){
 				 */
 				pop_stack();
 				
-				if(!match(currentSymbol, mainLex.token) && errorFlag == FALSE){
-					errorFlag = TRUE;
-					ast_clear_stack();
-					if(dummyNode)
-						free(dummyNode);
-					dummyNode = NULL;
-					clear_stack();
-					deallocate_buffer();
-					close_source_file();
-					exit(1);
+				if(!match(currentSymbol, mainLex.token)){
+					if(errorFlag == FALSE){
+						errorFlag = TRUE;
+						ast_clear_stack();
+						if(dummyNode)
+							free(dummyNode);
+						dummyNode = NULL;
+					}
+					
+					break;
 				}
 
 				if(errorFlag == FALSE){
@@ -160,17 +164,29 @@ void parse(){
 				pop_stack();
 				nextStep = parsingTable[currentSymbol][mainLex.token];
 				
-				if(nextStep == 0){
-					errorFlag = TRUE;
+				if(nextStep < 1){
 					printf("ERRO SINTATICO: \"%s\" INVALIDO [linha: %d], COLUNA %d.\n", mainLex.word, mainLex.line, mainLex.column);
-					ast_clear_stack();
-					if(dummyNode)
-						free(dummyNode);
-					dummyNode = NULL;
-					clear_stack();
-					deallocate_buffer();
-					close_source_file();
-					exit(1);
+
+					if(errorFlag == FALSE){
+						errorFlag = TRUE;
+						ast_clear_stack();
+						if(dummyNode)
+							free(dummyNode);
+						dummyNode = NULL;
+					}
+
+					if(nextStep == -1){
+						pop_stack();
+						if(parserStack->kind == TERMINAL)
+							pop_stack();
+						break;
+					}
+
+					push_stack(currentSymbol, NON_TERMINAL);
+					
+					while(parsingTable[currentSymbol][mainLex.token] == 0)
+						get_next_lexem();
+					break;
 				}
 
 				handle_stack(nextStep);
@@ -208,6 +224,13 @@ void parse(){
 		if(dummyNode)
 			free(dummyNode);
 		dummyNode = NULL;
+	}
+	else{
+		ast_clear_stack();
+		clear_stack();
+		deallocate_buffer();
+		close_source_file();
+		exit(1);
 	}
 
 	clear_stack();
